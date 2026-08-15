@@ -1,7 +1,14 @@
-import hashlib, importlib.metadata, json, platform, socket, subprocess, sys
-from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+import platform
+import socket
+import subprocess
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import yaml
 
@@ -20,14 +27,14 @@ def write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True, default=str) + "\n")
 
 def write_manifest(command: str, model_revisions: dict[str, str] | None = None) -> str:
-    stamp = datetime.now(timezone.utc)
+    stamp = datetime.now(UTC)
     run_id = stamp.strftime("%Y%m%dT%H%M%S%fZ")
     lock = ROOT / "uv.lock"
     try:
         git_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=False).stdout.strip() or None
     except OSError:
         git_commit = None
-    packages = {}
+    packages: dict[str, str | None] = {}
     for name in ("torch", "transformers", "datasets", "transformer-lens", "scikit-learn"):
         try: packages[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError: packages[name] = None

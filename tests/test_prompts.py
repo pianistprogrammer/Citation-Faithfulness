@@ -1,5 +1,7 @@
 import pytest
+
 from citation_faithfulness.generation.prompts import user_prompt
+
 
 def test_prompt_has_five_documents():
     prompt = user_prompt("Where?", ["a", "b", "c", "d", "e"])

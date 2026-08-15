@@ -1,8 +1,10 @@
 import torch
+
 from citation_faithfulness.generation.models import LoadedModel
 
+
 def generate(loaded: LoadedModel, messages: list[dict[str, str]]) -> tuple[str, int, str]:
-    tokenizer = loaded.tokenizer.tokenizer if hasattr(loaded.tokenizer, "tokenizer") else loaded.tokenizer
+    tokenizer = loaded.text_tokenizer
     rendered = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     encoded = tokenizer(rendered, return_tensors="pt").to(loaded.model.device)
     with torch.inference_mode():

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from math import sqrt
 
+
 def wilson(successes: int, total: int, z: float = 1.959963984540054) -> tuple[float, float]:
     if total == 0: return (float("nan"), float("nan"))
     p = successes / total

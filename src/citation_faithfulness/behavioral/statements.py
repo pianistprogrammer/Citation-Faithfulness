@@ -1,7 +1,10 @@
-import re, unicodedata
+import re
+import unicodedata
 from dataclasses import dataclass
+
 CITATION_RE = re.compile(r"\[([1-5])\]")
 GROUP_RE = re.compile(r"((?:\[[1-5]\])+)")
+STOPWORDS = {"a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "it", "of", "on", "or", "that", "the", "this", "to", "was", "were", "with"}
 
 @dataclass(frozen=True)
 class CitedStatement:
@@ -29,3 +32,25 @@ def sentence_with_phrase(answer: str, phrase: str) -> str | None:
     for sentence in re.split(r"(?<=[.!?])\s+|\n+", answer):
         if wanted and wanted in normalize(sentence): return sentence
     return None
+
+
+def extract_target_phrase(statement: str) -> str | None:
+    """Extract the maximal trailing content span used by the fixed intervention.
+
+    The PRD's noun/proper-noun/number rule is implemented conservatively without
+    adding an unapproved POS package: punctuation and stopwords terminate the
+    trailing candidate, while capitalized, numeric, and content tokens extend it.
+    """
+    tokens = re.findall(r"[\w'-]+", unicodedata.normalize("NFKC", statement), re.UNICODE)
+    selected: list[str] = []
+    for token in reversed(tokens):
+        if token.lower() in STOPWORDS:
+            if selected:
+                break
+            continue
+        selected.append(token)
+        if len(selected) == 8:
+            break
+    if not selected:
+        return None
+    return " ".join(reversed(selected))

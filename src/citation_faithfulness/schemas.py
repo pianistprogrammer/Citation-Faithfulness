@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
+
 
 class Label(StrEnum):
     POST_RATIONALIZED = "POST_RATIONALIZED"
