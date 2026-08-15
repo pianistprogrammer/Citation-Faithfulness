@@ -1,0 +1,8 @@
+seed: 42
+nq_questions: 1444
+retrieval_k: 5
+chunk_tokens: 100
+conflictbank_examples: 2000
+mechanistic_examples: 31
+probe_split: [0.70, 0.15, 0.15]
+bootstrap_resamples: 1000
