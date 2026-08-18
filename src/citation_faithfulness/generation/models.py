@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from typing import Any
 
 import torch
 from huggingface_hub import model_info
-from transformers import AutoModelForCausalLM, AutoProcessor, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 ALLOWED_MODELS = {"meta-llama/Llama-3.1-8B-Instruct", "Qwen/Qwen2.5-7B-Instruct", "google/gemma-3-12b-it"}
 
@@ -39,7 +39,7 @@ def load_model(model_id: str) -> LoadedModel:
     revision = model_info(model_id).sha
     if revision is None:
         raise RuntimeError(f"Hugging Face did not resolve a commit SHA for {model_id}")
-    tokenizer = AutoProcessor.from_pretrained(model_id, revision=revision) if model_id.startswith("google/gemma-3") else AutoTokenizer.from_pretrained(model_id, revision=revision)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
     dtype = preferred_dtype(device)
     if device.type == "cuda":
         model = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, torch_dtype=dtype, device_map="auto")
