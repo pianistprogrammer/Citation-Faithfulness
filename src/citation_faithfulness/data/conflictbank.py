@@ -14,6 +14,7 @@ from citation_faithfulness.generation.prompts import SYSTEM_PROMPT
 from citation_faithfulness.utils import ARTIFACTS, write_json, write_manifest
 
 DATASET_ID = "Warrieryes/CB_qa"
+MAX_EXAMPLES = 2000
 FIELD_SETS = (
     ("question", "object", "replaced_object", "misinformation_conflict_evidence_evidence"),
     ("question", "answer", "conflict_answer", "conflict_context"),
@@ -43,9 +44,11 @@ def prepare(force: bool = False, rows: Iterable[dict[str, Any]] | None = None) -
         mapped = _map(row, ordinal)
         if mapped is not None:
             records.append(mapped)
+            if len(records) >= MAX_EXAMPLES:
+                break
     if not records:
         raise ValueError(f"ConflictBank schema cannot be mapped deterministically; observed fields: {sorted(observed)}")
-    records = sorted(records, key=lambda item: item["example_id"])[:2000]
+    records = sorted(records, key=lambda item: item["example_id"])
     output.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_parquet(output, index=False)
     return output

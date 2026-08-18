@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from typing import Any
 
 import torch
@@ -12,18 +13,37 @@ class LoadedModel:
     model: Any
     tokenizer: Any
     revision: str
+    device: torch.device
 
     @property
     def text_tokenizer(self):
         return getattr(self.tokenizer, "tokenizer", self.tokenizer)
 
+
+def preferred_device() -> torch.device:
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
+def preferred_dtype(device: torch.device) -> torch.dtype:
+    return torch.bfloat16 if device.type == "cuda" else torch.float16
+
 def load_model(model_id: str) -> LoadedModel:
     if model_id not in ALLOWED_MODELS: raise ValueError(f"Model must be one of {sorted(ALLOWED_MODELS)}")
-    if not torch.cuda.is_available(): raise RuntimeError("CUDA is required by the PRD; CPU/MPS substitution is not permitted")
+    device = preferred_device()
+    if device.type == "cpu": raise RuntimeError("CUDA or MPS is required for model execution")
+    if device.type == "mps": os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
     revision = model_info(model_id).sha
     if revision is None:
         raise RuntimeError(f"Hugging Face did not resolve a commit SHA for {model_id}")
     tokenizer = AutoProcessor.from_pretrained(model_id, revision=revision) if model_id.startswith("google/gemma-3") else AutoTokenizer.from_pretrained(model_id, revision=revision)
-    model = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, torch_dtype=torch.bfloat16, device_map="auto")
+    dtype = preferred_dtype(device)
+    if device.type == "cuda":
+        model = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, torch_dtype=dtype, device_map="auto")
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, torch_dtype=dtype, low_cpu_mem_usage=True).to(device)
     model.eval()
-    return LoadedModel(model, tokenizer, revision)
+    return LoadedModel(model, tokenizer, revision, device)

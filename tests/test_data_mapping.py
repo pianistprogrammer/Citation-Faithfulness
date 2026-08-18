@@ -1,3 +1,4 @@
+from citation_faithfulness.behavioral.experiment import _optional_documents, _optional_int
 from citation_faithfulness.data.conflictbank import _map
 from citation_faithfulness.data.kilt import _page_fields
 from citation_faithfulness.retrieval.bm25 import BM25Index, Chunk, chunk_page
@@ -18,3 +19,11 @@ def test_conflictbank_current_schema():
 def test_bm25_is_deterministic():
     index = BM25Index([Chunk("b", "2", "B", "irrelevant"), Chunk("a", "1", "A", "paris capital")])
     assert index.search("paris", 1)[0]["doc_id"] == "a"
+
+
+def test_parquet_missing_values_are_normalized():
+    assert _optional_int(float("nan")) is None
+    assert _optional_int(None) is None
+    assert _optional_int(5.0) == 5
+    assert _optional_documents(float("nan")) is None
+    assert _optional_documents(["a", "b"]) == ["a", "b"]

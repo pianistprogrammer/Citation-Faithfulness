@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/scripts/project_env.sh"
+
 echo "Checking environment..."
 uv run citation-faithfulness doctor
 

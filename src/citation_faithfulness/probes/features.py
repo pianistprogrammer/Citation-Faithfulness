@@ -52,7 +52,7 @@ def extract(model_id: str, force: bool = False, loaded: LoadedModel | None = Non
         answer = row["intervention_answer"]; messages = chat_messages(row["question"], list(row["intervention_documents"]))
         prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False); answer_ids = tokenizer.encode(answer, add_special_tokens=False)
-        full_ids = torch.tensor([prompt_ids + answer_ids], device=loaded.model.device)
+        full_ids = torch.tensor([prompt_ids + answer_ids], device=loaded.device)
         marker = f"[{int(row['adversarial_doc_index'])}]"; marker_ids = tokenizer.encode(marker, add_special_tokens=False)
         marker_at = _subsequence(answer_ids, marker_ids) if row["adversarial_doc_cited"] else None
         if marker_at is not None: decision = marker_at

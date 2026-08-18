@@ -17,6 +17,7 @@ from citation_faithfulness.data.conflictbank import run as run_conflictbank
 from citation_faithfulness.data.kilt import prepare as prepare_kilt_fn
 from citation_faithfulness.data.natural_questions import prepare as prepare_nq_fn
 from citation_faithfulness.data.popqa import prepare as prepare_popqa_fn
+from citation_faithfulness.generation.models import preferred_device
 from citation_faithfulness.mechanistic.interventions import validate as validate_mechanistic
 from citation_faithfulness.mechanistic.patching import patch, select_components, select_examples
 from citation_faithfulness.mechanistic.popqa_pairs import build_pairs
@@ -117,8 +118,10 @@ def probe_baselines(model: str = typer.Option(..., "--model"), force: bool = Fal
 
 @app.command("doctor")
 def doctor() -> None:
-    status = {"python_3_11": sys.version_info[:2] == (3, 11), "uv_lock": (ROOT / "uv.lock").exists(), "venv": (ROOT / ".venv").exists(), "cuda": torch.cuda.is_available(), "hf_token": bool(os.environ.get("HF_TOKEN")), "wallat_checkout": (ROOT / "external/RAG-attributions").exists()}
-    console.print_json(json.dumps(status)); raise typer.Exit(0 if all(status.values()) else 1)
+    device = preferred_device()
+    status = {"python_3_11": sys.version_info[:2] == (3, 11), "uv_lock": (ROOT / "uv.lock").exists(), "venv": (ROOT / ".venv").exists(), "accelerator": device.type in {"cuda", "mps"}, "device": device.type, "cuda": torch.cuda.is_available(), "mps": torch.backends.mps.is_available(), "hf_token": bool(os.environ.get("HF_TOKEN")), "wallat_checkout": (ROOT / "external/RAG-attributions").exists()}
+    required = ("python_3_11", "uv_lock", "venv", "accelerator", "hf_token", "wallat_checkout")
+    console.print_json(json.dumps(status)); raise typer.Exit(0 if all(bool(status[key]) for key in required) else 1)
 
 @app.command("report")
 def report() -> None:
@@ -143,7 +146,7 @@ def report() -> None:
 @app.command("smoke-test")
 def smoke_test(force: bool = False) -> None:
     model_id = "meta-llama/Llama-3.1-8B-Instruct"
-    if not torch.cuda.is_available(): raise typer.BadParameter("CUDA is required by the PRD smoke test")
+    if preferred_device().type == "cpu": raise typer.BadParameter("CUDA or MPS is required by the smoke test")
     retrieve_nq_fn(force); generate_originals(model_id, force, limit=10); build_interventions(model_id, force); run_interventions(model_id, force); compute_metrics(); write_splits(force); extract_features(model_id, force); train_layers(model_id, force); write_manifest("smoke-test")
     console.print("[green]Smoke test completed for exactly 10 NQ examples.[/green]")
 

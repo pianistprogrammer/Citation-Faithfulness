@@ -11,11 +11,11 @@ uv run pytest
 uv run citation-faithfulness --help
 ```
 
-Full experiments require CUDA GPUs, Hugging Face authentication, accepted access to `meta-llama/Llama-3.1-8B-Instruct` and `google/gemma-3-12b-it`, and the Wallat reference checkout at `external/RAG-attributions`. Run `uv run citation-faithfulness doctor` before downloading data.
+Full experiments require a supported accelerator, Hugging Face authentication, accepted access to `meta-llama/Llama-3.1-8B-Instruct` and `google/gemma-3-12b-it`, and the Wallat reference checkout at `external/RAG-attributions`. This checkout supports CUDA or Apple Silicon MPS; on MPS it uses `float16` and enables PyTorch MPS fallback. Run `uv run citation-faithfulness doctor` before downloading data.
 
 Commands are restartable: existing artifacts are preserved unless `--force` is supplied. Every producing command writes `artifacts/runs/<run-id>/manifest.json`.
 
-Gemma requires accepting Google's model license. Llama also requires gated repository access. Authenticate on the execution machine with `huggingface-cli login` or `HF_TOKEN`. The PRD requires CUDA, bfloat16, unquantized weights, and does not permit CPU, MPS, or quantized substitutes.
+Gemma requires accepting Google's model license. Llama also requires gated repository access. Authenticate on the execution machine with `huggingface-cli login` or `HF_TOKEN`. The original PRD was CUDA-first; this local run path uses the Mac MPS backend when CUDA is unavailable.
 
 ## Execution
 

@@ -42,11 +42,14 @@ def write_manifest(command: str, model_revisions: dict[str, str] | None = None) 
         import torch
         cuda = torch.version.cuda
         gpu = torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
-    except ImportError: cuda = gpu = None
+        if gpu is None and torch.backends.mps.is_available():
+            gpu = "Apple MPS"
+        accelerator = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+    except ImportError: cuda = gpu = accelerator = None
     configs = {}
     for path in sorted((ROOT / "configs").glob("*.yaml")):
         configs[path.name] = yaml.safe_load(path.read_text())
-    payload = {"command": command, "git_commit": git_commit, "utc_timestamp": stamp.isoformat(), "hostname": socket.gethostname(), "python_version": sys.version, "uv_lock_sha256": hashlib.sha256(lock.read_bytes()).hexdigest() if lock.exists() else None, "package_versions": packages, "gpu_model": gpu, "cuda_version": cuda, "model_revisions": model_revisions or {}, "dataset_revisions": {}, "seed": SEED, "configs": configs, "platform": platform.platform()}
+    payload = {"command": command, "git_commit": git_commit, "utc_timestamp": stamp.isoformat(), "hostname": socket.gethostname(), "python_version": sys.version, "uv_lock_sha256": hashlib.sha256(lock.read_bytes()).hexdigest() if lock.exists() else None, "package_versions": packages, "accelerator": accelerator, "gpu_model": gpu, "cuda_version": cuda, "model_revisions": model_revisions or {}, "dataset_revisions": {}, "seed": SEED, "configs": configs, "platform": platform.platform()}
     write_json(ARTIFACTS / "runs" / run_id / "manifest.json", payload)
     write_json(ARTIFACTS / "run_manifest.json", payload)
     return run_id

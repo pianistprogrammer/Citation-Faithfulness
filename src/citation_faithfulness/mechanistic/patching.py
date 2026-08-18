@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from transformer_lens import HookedTransformer
 
+from citation_faithfulness.generation.models import preferred_device, preferred_dtype
 from citation_faithfulness.mechanistic.hooks import replace_head_positions, replace_position
 from citation_faithfulness.utils import ARTIFACTS, write_json, write_manifest
 
@@ -26,8 +27,9 @@ def noising_degradation(clean: float, corrupted: float, patched: float) -> float
     return (clean - patched) / (clean - corrupted)
 
 def load_hooked_model() -> HookedTransformer:
-    if not torch.cuda.is_available(): raise RuntimeError("CUDA is required for mechanistic experiments")
-    model = HookedTransformer.from_pretrained(MODEL_ID, dtype=torch.bfloat16, device="cuda")
+    device = preferred_device()
+    if device.type == "cpu": raise RuntimeError("CUDA or MPS is required for mechanistic experiments")
+    model = HookedTransformer.from_pretrained(MODEL_ID, dtype=preferred_dtype(device), device=device.type)
     model.eval(); return model
 
 def prompt(tokenizer, document: str, question: str, answer: str) -> str:

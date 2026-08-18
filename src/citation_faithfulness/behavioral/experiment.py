@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow.parquet as pq
+from tqdm import tqdm
 
 from citation_faithfulness.behavioral.adversarial import inject_phrase
 from citation_faithfulness.behavioral.labels import label_answer
@@ -28,6 +30,71 @@ def _retrieval_groups(limit: int | None = None) -> list[tuple[str, pd.DataFrame]
     frame = pd.read_parquet(path).sort_values(["question_id", "rank"])
     groups = list(frame.groupby("question_id", sort=True))
     return groups[:limit] if limit is not None else groups
+
+
+def _kilt_random_pool(limit: int = 50_000, batch_size: int = 8192, force: bool = False) -> pd.DataFrame:
+    output = ARTIFACTS / "data" / "kilt_random_pool.parquet"
+    if output.exists() and not force:
+        return pd.read_parquet(output)
+
+    source = ARTIFACTS / "data" / "kilt_chunks.parquet"
+    if not source.exists():
+        raise FileNotFoundError("Run `citation-faithfulness data prepare-kilt` first")
+
+    rng = seeded_rng("kilt_random_pool")
+    reservoir: list[dict[str, Any]] = []
+    seen = 0
+    parquet = pq.ParquetFile(source)
+    columns = ["doc_id", "page_id", "title", "text"]
+    for batch in tqdm(parquet.iter_batches(batch_size=batch_size, columns=columns), desc="KILT random pool", unit="batch"):
+        rows = batch.to_pydict()
+        for doc_id, page_id, title, text in zip(rows["doc_id"], rows["page_id"], rows["title"], rows["text"], strict=True):
+            item = {"doc_id": str(doc_id), "page_id": str(page_id), "title": str(title), "text": str(text)}
+            seen += 1
+            if len(reservoir) < limit:
+                reservoir.append(item)
+                continue
+            replacement = int(rng.integers(seen))
+            if replacement < limit:
+                reservoir[replacement] = item
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(reservoir).sort_values("doc_id")
+    frame.to_parquet(output, index=False)
+    return frame
+
+
+def _select_random_doc(pool: pd.DataFrame, row: dict[str, Any], phrase_norm: str) -> Any | None:
+    original_pages = {str(value) for value in row["page_ids"]}
+    eligible = pool[
+        (~pool.page_id.astype(str).isin(original_pages))
+        & (~pool.text.map(lambda text, wanted=phrase_norm: wanted in normalize(str(text))))
+    ].sort_values("doc_id")
+    if eligible.empty:
+        return None
+    return eligible.iloc[int(seeded_rng(str(row["question_id"])).integers(len(eligible)))]
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return int(value)
+
+
+def _optional_documents(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return list(value)
 
 
 def generate_originals(model_id: str, force: bool = False, limit: int | None = None, loaded: LoadedModel | None = None) -> Path:
@@ -74,7 +141,7 @@ def build_interventions(model_id: str, force: bool = False, loaded: LoadedModel 
     if not originals_path.exists():
         raise FileNotFoundError("Generate original answers first")
     loaded = loaded or load_model(model_id)
-    corpus = pd.read_parquet(ARTIFACTS / "data" / "kilt_chunks.parquet")
+    random_pool = _kilt_random_pool()
     records = []
     for row in pd.read_parquet(originals_path).to_dict("records"):
         target = _select_target(row, loaded.text_tokenizer)
@@ -83,13 +150,7 @@ def build_interventions(model_id: str, force: bool = False, loaded: LoadedModel 
         cited_all = {citation for item in parse_cited_statements(row["parsed_answer"]) for citation in item.citations}
         phrase_norm = normalize(target["target_phrase"])
         base = {**row, **target}
-        original_pages = {str(value) for value in row["page_ids"]}
-        contains_phrase = corpus.text.map(lambda text, wanted=phrase_norm: wanted in normalize(text))
-        eligible = corpus[(~corpus.page_id.astype(str).isin(original_pages)) & (~contains_phrase)].sort_values("doc_id")
-        if eligible.empty:
-            random_doc = None
-        else:
-            random_doc = eligible.iloc[int(seeded_rng(str(row["question_id"])).integers(len(eligible)))]
+        random_doc = _select_random_doc(random_pool, row, phrase_norm)
         for condition in Condition:
             adversarial_index: int | None = None
             documents = list(row["documents"])
@@ -134,9 +195,9 @@ def run_interventions(model_id: str, force: bool = False, loaded: LoadedModel | 
             messages = chat_messages(row["question"], list(row["intervention_documents"]))
             answer, _, prompt = generate(loaded, messages)
             recovered, cited, label = label_answer(answer, row["target_phrase"], int(row["adversarial_doc_index"]))
-        validated = BehavioralRow(run_id=run_id, model_id=model_id, model_revision=loaded.revision, question_id=str(row["question_id"]), question=row["question"], condition=row["condition"], condition_available=bool(row["condition_available"]), target_statement=row["target_statement"], target_phrase=row["target_phrase"], original_target_doc_index=int(row["original_target_doc_index"]), adversarial_doc_index=int(row["adversarial_doc_index"]) if row["adversarial_doc_index"] is not None else None, original_answer=row["parsed_answer"], intervention_answer=answer, statement_recovered=recovered, adversarial_doc_cited=cited, label=label, prompt_sha256=sha256_text(prompt)).model_dump()
+        validated = BehavioralRow(run_id=run_id, model_id=model_id, model_revision=loaded.revision, question_id=str(row["question_id"]), question=row["question"], condition=row["condition"], condition_available=bool(row["condition_available"]), target_statement=row["target_statement"], target_phrase=row["target_phrase"], original_target_doc_index=int(row["original_target_doc_index"]), adversarial_doc_index=_optional_int(row["adversarial_doc_index"]), original_answer=row["parsed_answer"], intervention_answer=answer, statement_recovered=recovered, adversarial_doc_cited=cited, label=label, prompt_sha256=sha256_text(prompt)).model_dump()
         validated["original_documents"] = list(row["documents"])
-        validated["intervention_documents"] = list(row["intervention_documents"]) if row["intervention_documents"] is not None else None
+        validated["intervention_documents"] = _optional_documents(row["intervention_documents"])
         records.append(validated)
         if len(manual) < 50:
             manual.append(validated)

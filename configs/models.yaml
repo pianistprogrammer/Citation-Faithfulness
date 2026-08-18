@@ -6,8 +6,8 @@ models:
   - id: google/gemma-3-12b-it
     roles: [behavioral, probe]
 generation:
-  torch_dtype: bfloat16
-  device_map: auto
+  torch_dtype: auto_by_backend
+  device: auto_cuda_or_mps
   do_sample: false
   num_beams: 1
   max_new_tokens: 256
