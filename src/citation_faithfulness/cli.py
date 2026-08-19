@@ -66,13 +66,25 @@ def prepare_conflictbank(force: bool = False): emit(prepare_conflictbank_fn(forc
 def retrieve_nq(force: bool = False): emit(retrieve_nq_fn(force))
 
 @behavioral_app.command("generate-original")
-def behavioral_original(model: str = typer.Option(..., "--model"), force: bool = False): emit(generate_originals(model, force))
+def behavioral_original(
+    model: str = typer.Option(..., "--model"),
+    force: bool = False,
+    max_questions: int | None = typer.Option(None, "--max-questions", help="Generate only the next N unfinished questions."),
+    max_new_tokens: int = typer.Option(256, "--max-new-tokens", help="Maximum new tokens per answer."),
+):
+    emit(generate_originals(model, force, max_questions=max_questions, max_new_tokens=max_new_tokens))
 
 @behavioral_app.command("build-interventions")
 def behavioral_build(model: str = typer.Option(..., "--model"), force: bool = False): emit(build_interventions(model, force))
 
 @behavioral_app.command("run-interventions")
-def behavioral_run(model: str = typer.Option(..., "--model"), force: bool = False): emit(run_interventions(model, force))
+def behavioral_run(
+    model: str = typer.Option(..., "--model"),
+    force: bool = False,
+    max_rows: int | None = typer.Option(None, "--max-rows", help="Run only the next N unfinished intervention rows."),
+    max_new_tokens: int = typer.Option(256, "--max-new-tokens", help="Maximum new tokens per answer."),
+):
+    emit(run_interventions(model, force, max_rows=max_rows, max_new_tokens=max_new_tokens))
 
 @behavioral_app.command("metrics")
 def behavioral_metrics(): emit(compute_metrics())

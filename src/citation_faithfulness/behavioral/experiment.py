@@ -97,19 +97,32 @@ def _optional_documents(value: Any) -> list[str] | None:
     return list(value)
 
 
-def generate_originals(model_id: str, force: bool = False, limit: int | None = None, loaded: LoadedModel | None = None) -> Path:
+def generate_originals(
+    model_id: str,
+    force: bool = False,
+    limit: int | None = None,
+    max_questions: int | None = None,
+    max_new_tokens: int = 256,
+    loaded: LoadedModel | None = None,
+) -> Path:
     output = ARTIFACTS / "behavioral" / "originals" / f"{model_slug(model_id)}.parquet"
     existing = pd.read_parquet(output) if output.exists() and not force else pd.DataFrame()
     done = set(existing.question_id.astype(str)) if not existing.empty else set()
+    groups = _retrieval_groups(limit)
+    pending = [(question_id, group) for question_id, group in groups if str(question_id) not in done]
+    if max_questions is not None:
+        pending = pending[:max_questions]
+    if not pending and output.exists() and not force:
+        return output
     loaded = loaded or load_model(model_id)
     records = existing.to_dict("records")
-    for question_id, group in _retrieval_groups(limit):
-        if str(question_id) in done:
-            continue
+    for step, (question_id, group) in enumerate(tqdm(pending, desc=f"Generate originals: {model_slug(model_id)}", unit="question"), 1):
         documents = group.text.tolist()
         messages = chat_messages(group.question.iloc[0], documents)
-        answer, input_length, prompt = generate(loaded, messages)
+        answer, input_length, prompt = generate(loaded, messages, max_new_tokens=max_new_tokens)
         records.append({"model_id": model_id, "model_revision": loaded.revision, "question_id": str(question_id), "question": group.question.iloc[0], "documents": documents, "document_ids": group.doc_id.tolist(), "page_ids": group.page_id.astype(str).tolist(), "raw_prompt": prompt, "prompt_sha256": sha256_text(prompt), "tokenized_input_length": input_length, "raw_output": answer, "parsed_answer": answer, "parsed_citations": sorted({citation for item in parse_cited_statements(answer) for citation in item.citations})})
+        output.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(records).to_parquet(output, index=False)
     output.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_parquet(output, index=False)
     write_manifest(f"behavioral generate-original --model {model_id}", {model_id: loaded.revision})
@@ -175,7 +188,13 @@ def build_interventions(model_id: str, force: bool = False, loaded: LoadedModel 
     return output
 
 
-def run_interventions(model_id: str, force: bool = False, loaded: LoadedModel | None = None) -> Path:
+def run_interventions(
+    model_id: str,
+    force: bool = False,
+    max_rows: int | None = None,
+    max_new_tokens: int = 256,
+    loaded: LoadedModel | None = None,
+) -> Path:
     output = ARTIFACTS / "behavioral" / "results" / f"{model_slug(model_id)}.parquet"
     source = ARTIFACTS / "behavioral" / "interventions" / f"{model_slug(model_id)}.parquet"
     if not source.exists():
@@ -186,14 +205,19 @@ def run_interventions(model_id: str, force: bool = False, loaded: LoadedModel | 
     run_id = write_manifest(f"behavioral run-interventions --model {model_id}", {model_id: loaded.revision})
     records = existing.to_dict("records")
     manual: list[dict[str, Any]] = []
+    pending = []
     for row in pd.read_parquet(source).to_dict("records"):
         key = (str(row["question_id"]), row["condition"])
         if key in done:
             continue
+        pending.append(row)
+    if max_rows is not None:
+        pending = pending[:max_rows]
+    for row in tqdm(pending, desc=f"Run interventions: {model_slug(model_id)}", unit="row"):
         answer = None; recovered = cited = None; label = None; prompt = ""
         if row["condition_available"]:
             messages = chat_messages(row["question"], list(row["intervention_documents"]))
-            answer, _, prompt = generate(loaded, messages)
+            answer, _, prompt = generate(loaded, messages, max_new_tokens=max_new_tokens)
             recovered, cited, label = label_answer(answer, row["target_phrase"], int(row["adversarial_doc_index"]))
         validated = BehavioralRow(run_id=run_id, model_id=model_id, model_revision=loaded.revision, question_id=str(row["question_id"]), question=row["question"], condition=row["condition"], condition_available=bool(row["condition_available"]), target_statement=row["target_statement"], target_phrase=row["target_phrase"], original_target_doc_index=int(row["original_target_doc_index"]), adversarial_doc_index=_optional_int(row["adversarial_doc_index"]), original_answer=row["parsed_answer"], intervention_answer=answer, statement_recovered=recovered, adversarial_doc_cited=cited, label=label, prompt_sha256=sha256_text(prompt)).model_dump()
         validated["original_documents"] = list(row["documents"])
@@ -201,6 +225,8 @@ def run_interventions(model_id: str, force: bool = False, loaded: LoadedModel | 
         records.append(validated)
         if len(manual) < 50:
             manual.append(validated)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(records).to_parquet(output, index=False)
     output.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_parquet(output, index=False)
     if model_id == "meta-llama/Llama-3.1-8B-Instruct":
