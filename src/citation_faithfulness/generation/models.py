@@ -31,16 +31,33 @@ def preferred_device() -> torch.device:
 def preferred_dtype(device: torch.device) -> torch.dtype:
     return torch.bfloat16 if device.type == "cuda" else torch.float16
 
-def load_model(model_id: str) -> LoadedModel:
+
+def model_dtype(model_id: str, device: torch.device) -> torch.dtype:
+    if device.type == "mps" and model_id.startswith("google/gemma-3"):
+        return torch.bfloat16
+    return preferred_dtype(device)
+
+
+def resolve_model_revision(model_id: str) -> str:
     if model_id not in ALLOWED_MODELS: raise ValueError(f"Model must be one of {sorted(ALLOWED_MODELS)}")
-    device = preferred_device()
-    if device.type == "cpu": raise RuntimeError("CUDA or MPS is required for model execution")
-    if device.type == "mps": os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
     revision = model_info(model_id).sha
     if revision is None:
         raise RuntimeError(f"Hugging Face did not resolve a commit SHA for {model_id}")
+    return revision
+
+
+def load_tokenizer(model_id: str) -> Any:
+    revision = resolve_model_revision(model_id)
+    return AutoTokenizer.from_pretrained(model_id, revision=revision)
+
+
+def load_model(model_id: str) -> LoadedModel:
+    device = preferred_device()
+    if device.type == "cpu": raise RuntimeError("CUDA or MPS is required for model execution")
+    if device.type == "mps": os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+    revision = resolve_model_revision(model_id)
     tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
-    dtype = preferred_dtype(device)
+    dtype = model_dtype(model_id, device)
     if device.type == "cuda":
         model = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, torch_dtype=dtype, device_map="auto")
     else:

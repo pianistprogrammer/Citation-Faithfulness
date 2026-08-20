@@ -12,7 +12,7 @@ from citation_faithfulness.behavioral.adversarial import inject_phrase
 from citation_faithfulness.behavioral.labels import label_answer
 from citation_faithfulness.behavioral.statements import extract_target_phrase, normalize, parse_cited_statements
 from citation_faithfulness.generation.generate import generate
-from citation_faithfulness.generation.models import LoadedModel, load_model
+from citation_faithfulness.generation.models import LoadedModel, load_model, load_tokenizer
 from citation_faithfulness.generation.prompts import chat_messages
 from citation_faithfulness.metrics.behavioral import aggregate
 from citation_faithfulness.schemas import BehavioralRow, Condition
@@ -107,6 +107,8 @@ def generate_originals(
 ) -> Path:
     output = ARTIFACTS / "behavioral" / "originals" / f"{model_slug(model_id)}.parquet"
     existing = pd.read_parquet(output) if output.exists() and not force else pd.DataFrame()
+    if not existing.empty and "raw_output" in existing:
+        existing = existing[existing.raw_output.fillna("").astype(str).str.len() > 0]
     done = set(existing.question_id.astype(str)) if not existing.empty else set()
     groups = _retrieval_groups(limit)
     pending = [(question_id, group) for question_id, group in groups if str(question_id) not in done]
@@ -148,16 +150,16 @@ def _select_target(row: dict[str, Any], tokenizer: Any) -> dict[str, Any] | None
 
 def build_interventions(model_id: str, force: bool = False, loaded: LoadedModel | None = None) -> Path:
     output = ARTIFACTS / "behavioral" / "interventions" / f"{model_slug(model_id)}.parquet"
-    if output.exists() and not force:
+    if output.exists() and not force and pq.ParquetFile(output).metadata.num_rows > 0:
         return output
     originals_path = ARTIFACTS / "behavioral" / "originals" / f"{model_slug(model_id)}.parquet"
     if not originals_path.exists():
         raise FileNotFoundError("Generate original answers first")
-    loaded = loaded or load_model(model_id)
+    tokenizer = loaded.text_tokenizer if loaded is not None else load_tokenizer(model_id)
     random_pool = _kilt_random_pool()
     records = []
     for row in pd.read_parquet(originals_path).to_dict("records"):
-        target = _select_target(row, loaded.text_tokenizer)
+        target = _select_target(row, tokenizer)
         if target is None:
             continue
         cited_all = {citation for item in parse_cited_statements(row["parsed_answer"]) for citation in item.citations}
