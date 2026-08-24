@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex paper"] 1787570028.1583 "paper.aux" "paper.bbl" "paper" 1787570028.90332 0
+["bibtex paper"] 1787571586.62163 "paper.aux" "paper.bbl" "paper" 1787571587.39542 0
   "./references.bib" 1787569893.18418 6952 de5520687aaabca3ba532a395235a259 ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/base/plain.bst" 1292289607 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
-  "paper.aux" 1787570028.67831 5291 565fa3f3c55b954c362d67c450e18209 "pdflatex"
+  "paper.aux" 1787571587.17141 6115 ba5526ef11aef2e4eb5ce31525f16f0d "pdflatex"
   (generated)
   "paper.bbl"
   "paper.blg"
   (rewritten before read)
-["pdflatex"] 1787570028.25601 "paper.tex" "paper.pdf" "paper" 1787570028.90347 0
+["pdflatex"] 1787571586.74758 "paper.tex" "paper.pdf" "paper" 1787571587.39556 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
@@ -106,10 +106,11 @@
   "/usr/local/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1773831732 5541377 04880c840ca220163a28f1a3af0ee662 ""
   "/usr/local/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1773831718 3636762 11611dce089160af9d6104d910a89675 ""
   "/usr/local/texlive/2026/texmf.cnf" 1772409725 577 648cd9f92f9c0eac486f4c71c85cfbbe ""
-  "paper.aux" 1787570028.67831 5291 565fa3f3c55b954c362d67c450e18209 "pdflatex"
-  "paper.bbl" 1787570028.25124 5390 3637858eedd0b89da747262c19efad18 "bibtex paper"
-  "paper.out" 1787570028.67943 2643 8e8c43aeb3c8b1f61f2ddf2ce08b380b "pdflatex"
-  "paper.tex" 1787570023.06708 31852 49d8347004eca514887977f93166789d ""
+  "figures/research_architecture.pdf" 1787571495.22754 91865 467e6dfc826bc62634aceec61c4a07e6 ""
+  "paper.aux" 1787571587.17141 6115 ba5526ef11aef2e4eb5ce31525f16f0d "pdflatex"
+  "paper.bbl" 1787571586.74218 5390 3637858eedd0b89da747262c19efad18 "bibtex paper"
+  "paper.out" 1787571587.17263 2809 357664d2948b9346d0c27db4541a2f65 "pdflatex"
+  "paper.tex" 1787571568.35311 33039 e694f499b5d5e7f9ae32eed5e2c9d38e ""
   (generated)
   "paper.aux"
   "paper.log"

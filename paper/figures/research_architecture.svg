@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="820" viewBox="0 0 1800 820" role="img" aria-labelledby="title desc">
+  <title id="title">Block Architecture for Citation Faithfulness Research</title>
+  <desc id="desc">Clean block diagram showing the citation faithfulness research pipeline from datasets through retrieval, open-weight models, experiments, probes, and final research outputs.</desc>
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 700 36px Arial, Helvetica, sans-serif; fill: #1d2636; }
+      .subtitle { font: 18px Arial, Helvetica, sans-serif; fill: #566174; }
+      .stage-title { font: 700 25px Arial, Helvetica, sans-serif; }
+      .label { font: 700 20px Arial, Helvetica, sans-serif; fill: #222b3d; }
+      .text { font: 16px Arial, Helvetica, sans-serif; fill: #374154; }
+      .small { font: 14px Arial, Helvetica, sans-serif; fill: #5b6678; }
+      .tiny { font: 12px Arial, Helvetica, sans-serif; fill: #667085; }
+      .stage { stroke-width: 2.4; rx: 18; ry: 18; }
+      .input { fill: #f0faf3; stroke: #3b874a; }
+      .retrieval { fill: #eef5ff; stroke: #37689e; }
+      .model { fill: #f4efff; stroke: #7b4ea3; }
+      .experiment { fill: #fff7e8; stroke: #bd850f; }
+      .probe { fill: #eefcff; stroke: #21839a; }
+      .output { fill: #fff0f0; stroke: #bd4545; }
+      .aux { fill: #eefafa; stroke: #0f737b; }
+      .mini { fill: #ffffff; stroke-width: 1.6; rx: 10; ry: 10; }
+      .mini-input { stroke: #7bb985; }
+      .mini-retrieval { stroke: #75a5d8; }
+      .mini-model { stroke: #a789d3; }
+      .mini-exp { stroke: #d5a646; }
+      .mini-probe { stroke: #62aebd; }
+      .mini-out { stroke: #d97b7b; }
+      .arrow { fill: none; stroke: #263244; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrowhead); }
+      .arrow-soft { fill: none; stroke: #657085; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrowhead-soft); }
+      .arrow-dash { fill: none; stroke: #263244; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="9" markerHeight="6" refX="7.8" refY="3" orient="auto">
+      <path d="M 0 0 L 9 3 L 0 6 z" fill="#263244" />
+    </marker>
+    <marker id="arrowhead-soft" markerWidth="8" markerHeight="5.5" refX="6.9" refY="2.75" orient="auto">
+      <path d="M 0 0 L 8 2.75 L 0 5.5 z" fill="#657085" />
+    </marker>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1d2636" flood-opacity="0.10" />
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1800" height="820" />
+
+  <g transform="translate(0,-90)">
+
+  <g filter="url(#softShadow)">
+    <rect class="stage input" x="70" y="210" width="250" height="300" />
+    <rect class="stage retrieval" x="395" y="210" width="250" height="300" />
+    <rect class="stage model" x="720" y="210" width="250" height="300" />
+    <rect class="stage experiment" x="1045" y="210" width="250" height="300" />
+    <rect class="stage probe" x="1370" y="210" width="250" height="300" />
+  </g>
+
+  <text class="stage-title" x="143" y="185" fill="#2f7d3d">Input</text>
+  <text class="stage-title" x="460" y="185" fill="#2f5e94">Retrieval</text>
+  <text class="stage-title" x="786" y="185" fill="#71469b">Models</text>
+  <text class="stage-title" x="1091" y="185" fill="#ad790d">Experiments</text>
+  <text class="stage-title" x="1441" y="185" fill="#197c91">Probes</text>
+
+  <rect class="mini mini-input" x="100" y="248" width="190" height="52" />
+  <text class="label" x="112" y="281">Natural Questions</text>
+  <rect class="mini mini-input" x="100" y="318" width="190" height="52" />
+  <text class="label" x="122" y="351">KILT Wikipedia</text>
+  <rect class="mini mini-input" x="100" y="388" width="190" height="52" />
+  <text class="label" x="122" y="421">ConflictBank</text>
+  <text class="small" x="121" y="466">PopQA supports the</text>
+  <text class="small" x="121" y="486">auxiliary mechanism path</text>
+
+  <rect class="mini mini-retrieval" x="425" y="248" width="190" height="68" />
+  <text class="label" x="447" y="280">BM25 top-5</text>
+  <text class="small" x="447" y="302">100-token chunks</text>
+  <rect class="mini mini-retrieval" x="425" y="340" width="190" height="68" />
+  <text class="label" x="447" y="372">Citation Prompt</text>
+  <text class="small" x="447" y="394">answer with [i]</text>
+  <text class="small" x="444" y="452">Retrieved documents become</text>
+  <text class="small" x="444" y="472">the attribution candidates.</text>
+
+  <rect class="mini mini-model" x="750" y="244" width="190" height="50" />
+  <text class="label" x="775" y="276">Llama-3.1-8B</text>
+  <rect class="mini mini-model" x="750" y="316" width="190" height="50" />
+  <text class="label" x="775" y="348">Qwen2.5-7B</text>
+  <rect class="mini mini-model" x="750" y="388" width="190" height="50" />
+  <text class="label" x="775" y="420">Gemma-3-12B</text>
+  <text class="small" x="774" y="468">Deterministic decoding</text>
+  <text class="small" x="774" y="488">max new tokens = 256</text>
+
+  <rect class="mini mini-exp" x="1075" y="240" width="190" height="62" />
+  <text class="label" x="1098" y="269">Generate</text>
+  <text class="small" x="1098" y="290">cited answers</text>
+  <rect class="mini mini-exp" x="1075" y="318" width="190" height="62" />
+  <text class="label" x="1098" y="347">Intervene</text>
+  <text class="small" x="1098" y="368">forged evidence</text>
+  <rect class="mini mini-exp" x="1075" y="396" width="190" height="62" />
+  <text class="label" x="1098" y="425">Label</text>
+  <text class="small" x="1098" y="446">post-rationalized</text>
+
+  <rect class="mini mini-probe" x="1400" y="240" width="190" height="62" />
+  <text class="label" x="1423" y="269">Hidden States</text>
+  <text class="small" x="1423" y="290">decision tokens</text>
+  <rect class="mini mini-probe" x="1400" y="318" width="190" height="62" />
+  <text class="label" x="1423" y="347">Logistic Probe</text>
+  <text class="small" x="1423" y="368">selected layer</text>
+  <rect class="mini mini-probe" x="1400" y="396" width="190" height="62" />
+  <text class="label" x="1423" y="425">Baselines</text>
+  <text class="small" x="1423" y="446">lexical / cosine / logit</text>
+
+  <path class="arrow" d="M 320 360 L 382 360" />
+  <path class="arrow" d="M 645 360 L 707 360" />
+  <path class="arrow" d="M 970 360 L 1032 360" />
+  <path class="arrow" d="M 1295 360 L 1357 360" />
+
+  <g filter="url(#softShadow)">
+    <rect class="stage output" x="1370" y="605" width="250" height="220" />
+  </g>
+  <text class="stage-title" x="1536" y="580" fill="#b84040">Output</text>
+  <rect class="mini mini-out" x="1400" y="655" width="190" height="54" />
+  <text class="label" x="1423" y="689">Metrics</text>
+  <rect class="mini mini-out" x="1400" y="733" width="190" height="54" />
+  <text class="label" x="1423" y="767">Report</text>
+  <path class="arrow" d="M 1495 510 L 1495 592" />
+
+  <g filter="url(#softShadow)">
+    <rect class="stage aux" x="405" y="625" width="790" height="205" />
+  </g>
+  <text class="stage-title" x="520" y="586" fill="#0b6e77">Auxiliary Mechanistic Path</text>
+  <text class="small" x="520" y="602">Llama only, PopQA capital pairs</text>
+
+  <rect class="mini" x="445" y="674" width="150" height="80" stroke="#0f737b" />
+  <text class="label" x="470" y="706">PopQA</text>
+  <text class="small" x="470" y="728">clean/corrupt</text>
+  <rect class="mini" x="635" y="674" width="150" height="80" stroke="#0f737b" />
+  <text class="label" x="660" y="706">Patch</text>
+  <text class="small" x="660" y="728">resid / MLP / heads</text>
+  <rect class="mini" x="825" y="674" width="150" height="80" stroke="#0f737b" />
+  <text class="label" x="850" y="706">Select</text>
+  <text class="small" x="850" y="728">components</text>
+  <rect class="mini" x="1015" y="674" width="150" height="80" stroke="#0f737b" />
+  <text class="label" x="1040" y="706">Validate</text>
+  <text class="small" x="1040" y="728">scale hooks</text>
+
+  <path class="arrow-soft" d="M 595 714 L 622 714" />
+  <path class="arrow-soft" d="M 785 714 L 812 714" />
+  <path class="arrow-soft" d="M 975 714 L 1002 714" />
+
+  <path class="arrow-dash" d="M 845 510 L 845 625" />
+  <path class="arrow-dash" d="M 1170 510 L 1170 625" />
+  <path class="arrow-dash" d="M 1195 728 L 1338 728" />
+
+  </g>
+</svg>

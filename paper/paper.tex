@@ -57,6 +57,17 @@ Linear probes address a different question: whether a target property is recover
 
 \section{Methodology}
 
+\subsection{Research Architecture}
+
+Figure~\ref{fig:research-architecture} summarizes the experimental architecture. The primary pipeline starts from Natural Questions, KILT Wikipedia, and ConflictBank inputs; retrieves top-$5$ BM25 contexts from 100-token Wikipedia chunks; runs deterministic generation with the three open-weight instruction-tuned models; applies behavioral interventions; and evaluates post-rationalization through citation labels and hidden-state probes. A separate auxiliary mechanistic path uses PopQA capital-city pairs for Llama-only activation patching, component selection, and generation-level validation. This separation keeps the behavioral comparison across all models distinct from the narrower causal analysis performed on Llama.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/research_architecture.pdf}
+\caption{Research architecture for the citation-faithfulness experiments. The main path evaluates retrieval, generation, behavioral interventions, and probes across all three models; the auxiliary mechanistic path performs Llama-only activation patching on PopQA examples.}
+\label{fig:research-architecture}
+\end{figure*}
+
 \subsection{Models and Data}
 
 All model weights and tokenizers were obtained from their official Hugging Face releases. We used the instruction-tuned checkpoints \href{https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct}{\texttt{meta-llama/Llama-3.1-8B-Instruct}}, \href{https://huggingface.co/Qwen/Qwen2.5-7B-Instruct}{\texttt{Qwen/Qwen2.5-7B-Instruct}}, and \href{https://huggingface.co/google/gemma-3-12b-it}{\texttt{google/gemma-3-12b-it}}, developed by Meta, Alibaba's Qwen team, and Google DeepMind, respectively \cite{grattafiori2024llama3,yang2024qwen25,gemmateam2025gemma3}. Llama 3.1 and Gemma 3 require acceptance of their respective model licenses, while Qwen2.5 is distributed under the Apache 2.0 license. These open-weight checkpoints permit hidden-state extraction and activation patching in addition to generation. The semantic-similarity baseline used \href{https://huggingface.co/sentence-transformers/all-mpnet-base-v2}{\texttt{sentence-transformers/all-mpnet-base-v2}} to encode document-query pairs, following the sentence-transformer bi-encoder approach \cite{reimers2019sentencebert}.
