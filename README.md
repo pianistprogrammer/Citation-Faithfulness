@@ -40,3 +40,22 @@ uv run citation-faithfulness report
 ```
 
 `prepare-kilt` and BM25 retrieval operate over the full KILT Wikipedia snapshot and require substantial RAM, disk, and runtime. Row-level generation, interventions, and extraction resume from existing Parquet artifacts unless `--force` is provided.
+
+## Chunked Runner
+
+Long local runs can be resumed through one dispatcher:
+
+```bash
+BATCH_SIZE=10 bash ./run_chunked.sh gemma-originals
+BATCH_SIZE=10 bash ./run_chunked.sh gemma-interventions
+BATCH_SIZE=10 bash ./run_chunked.sh conflictbank
+BATCH_SIZE=1 bash ./run_chunked.sh mechanistic-select
+BATCH_SIZE=1 bash ./run_chunked.sh mechanistic-patch residual
+BATCH_SIZE=1 bash ./run_chunked.sh mechanistic-patch mlp
+BATCH_SIZE=1 bash ./run_chunked.sh mechanistic-patch heads
+BATCH_SIZE=1 bash ./run_chunked.sh mechanistic-validate
+BATCH_SIZE=10 bash ./run_chunked.sh probe meta-llama/Llama-3.1-8B-Instruct
+bash ./run_chunked.sh report
+```
+
+Run `bash ./run_chunked.sh --help` for all subcommands and optional limits such as `MAX_ROWS`, `MAX_EXAMPLES`, `MAX_PAIRS`, and `MAX_BATCHES`.
