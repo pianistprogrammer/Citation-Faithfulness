@@ -6,8 +6,9 @@
 \citation{guu2020realm}
 \citation{izacard2021fid}
 \citation{liu2023verifiability}
-\citation{gao2023citations}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{1}{Introduction}{section.1}{}}
+\citation{gao2023citations}
 \citation{wallat2025correctness}
 \citation{qi2024mirage}
 \citation{guu2020realm}
@@ -19,68 +20,82 @@
 \citation{liu2023verifiability}
 \citation{wallat2025correctness}
 \citation{qi2024mirage}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
 \citation{mallen2023popqa}
 \citation{su2024conflictbank}
 \citation{meng2022rome}
 \citation{nanda2022transformerlens}
 \citation{vandort2026cite}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related-work}{{2}{3}{Related Work}{section.2}{}}
+\citation{burns2023latent}
+\citation{azaria2023lying}
+\citation{li2023iti}
 \citation{belinkov2022probes}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Methodology}{4}{section.3}\protected@file@percent }
+\newlabel{sec:methodology}{{3}{4}{Methodology}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Research Architecture}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Task Setup}{4}{subsection.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Research architecture for the citation-faithfulness experiments. The main path evaluates retrieval, generation, behavioral interventions, and probes across all three models. The auxiliary mechanistic path performs Llama-only activation patching on PopQA examples.}}{5}{figure.1}\protected@file@percent }
+\newlabel{fig:research-architecture}{{1}{5}{Research architecture for the citation-faithfulness experiments. The main path evaluates retrieval, generation, behavioral interventions, and probes across all three models. The auxiliary mechanistic path performs Llama-only activation patching on PopQA examples}{figure.1}{}}
 \citation{grattafiori2024llama3}
 \citation{yang2024qwen25}
 \citation{gemmateam2025gemma3}
 \citation{reimers2019sentencebert}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Methodology}{4}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Research Architecture}{4}{subsection.3.1}\protected@file@percent }
 \citation{wallat2025correctness}
 \citation{kwiatkowski2019natural}
 \citation{petroni2021kilt}
 \citation{mallen2023popqa}
 \citation{su2024conflictbank}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Research architecture for the citation-faithfulness experiments. The main path evaluates retrieval, generation, behavioral interventions, and probes across all three models; the auxiliary mechanistic path performs Llama-only activation patching on PopQA examples.}}{5}{figure.1}\protected@file@percent }
-\newlabel{fig:research-architecture}{{1}{5}{Research architecture for the citation-faithfulness experiments. The main path evaluates retrieval, generation, behavioral interventions, and probes across all three models; the auxiliary mechanistic path performs Llama-only activation patching on PopQA examples}{figure.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Models and Data}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Models and Data}{6}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Models and Execution}{6}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Behavioral Post-Rationalization Benchmark}{6}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}ConflictBank Validation}{7}{subsection.3.6}\protected@file@percent }
+\newlabel{subsec:conflictbank-validation}{{3.6}{7}{ConflictBank Validation}{subsection.3.6}{}}
 \citation{mallen2023popqa}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Models and Execution}{6}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Behavioral Post-Rationalization Benchmark}{6}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}ConflictBank Validation}{6}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Mechanistic Activation Patching}{6}{subsection.3.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Behavioral post-rationalization rates conditional on condition availability and target statement recovery.}}{7}{table.1}\protected@file@percent }
-\newlabel{tab:behavioral}{{1}{7}{Behavioral post-rationalization rates conditional on condition availability and target statement recovery}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Linear Faithfulness Probes}{7}{subsection.3.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experimental Results}{7}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Behavioral Post-Rationalization}{7}{subsection.4.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces ConflictBank prediction distribution aggregated over 2,000 examples per model.}}{8}{table.2}\protected@file@percent }
-\newlabel{tab:conflictbank}{{2}{8}{ConflictBank prediction distribution aggregated over 2,000 examples per model}{table.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Mechanistic intervention validation after component selection and scaling.}}{8}{table.3}\protected@file@percent }
-\newlabel{tab:mechanistic-validation}{{3}{8}{Mechanistic intervention validation after component selection and scaling}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}ConflictBank}{8}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Mechanistic Patching and Interventions}{8}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Faithfulness Probes}{8}{subsection.4.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Test performance of selected-layer linear probes. Best baseline AUROC is the maximum over lexical overlap, citation-logit margin, and document-query cosine similarity.}}{9}{table.4}\protected@file@percent }
-\newlabel{tab:probes}{{4}{9}{Test performance of selected-layer linear probes. Best baseline AUROC is the maximum over lexical overlap, citation-logit margin, and document-query cosine similarity}{table.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{9}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Limitations}{9}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Mechanistic Activation Patching}{8}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}Linear Faithfulness Probes}{8}{subsection.3.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Behavioral post-rationalization rates conditional on condition availability and target statement recovery.}}{9}{table.1}\protected@file@percent }
+\newlabel{tab:behavioral}{{1}{9}{Behavioral post-rationalization rates conditional on condition availability and target statement recovery}{table.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experimental Results}{9}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{4}{9}{Experimental Results}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Behavioral Post-Rationalization}{9}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}ConflictBank}{9}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces ConflictBank answer classes before and after conflicting evidence is supplied. The figure shows that all three models shift strongly toward the context-supported answer when conflict evidence is included.}}{10}{figure.2}\protected@file@percent }
+\newlabel{fig:conflictbank-shift}{{2}{10}{ConflictBank answer classes before and after conflicting evidence is supplied. The figure shows that all three models shift strongly toward the context-supported answer when conflict evidence is included}{figure.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Mechanistic validation after component selection and scaling. Correction success rate is the percentage of examples whose citation behavior is fixed by the scaling intervention.}}{10}{table.2}\protected@file@percent }
+\newlabel{tab:mechanistic-validation}{{2}{10}{Mechanistic validation after component selection and scaling. Correction success rate is the percentage of examples whose citation behavior is fixed by the scaling intervention}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Mechanistic Patching and Interventions}{10}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Faithfulness Probes}{10}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Test performance of selected-layer linear probes. Best baseline AUROC is the best score among lexical overlap, citation-logit margin, and document-query cosine similarity.}}{11}{table.3}\protected@file@percent }
+\newlabel{tab:probes}{{3}{11}{Test performance of selected-layer linear probes. Best baseline AUROC is the best score among lexical overlap, citation-logit margin, and document-query cosine similarity}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{11}{section.5}\protected@file@percent }
+\newlabel{sec:discussion}{{5}{11}{Discussion}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Limitations}{11}{section.6}\protected@file@percent }
+\newlabel{sec:limitations}{{6}{11}{Limitations}{section.6}{}}
 \bibstyle{plain}
 \bibdata{references}
-\bibcite{belinkov2022probes}{1}
-\bibcite{gao2023citations}{2}
-\bibcite{gemmateam2025gemma3}{3}
-\bibcite{grattafiori2024llama3}{4}
-\bibcite{guu2020realm}{5}
-\bibcite{izacard2021fid}{6}
-\bibcite{kwiatkowski2019natural}{7}
-\bibcite{lewis2020rag}{8}
-\bibcite{liu2023verifiability}{9}
-\bibcite{mallen2023popqa}{10}
-\bibcite{meng2022rome}{11}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{10}{section.7}\protected@file@percent }
-\bibcite{nanda2022transformerlens}{12}
-\bibcite{petroni2021kilt}{13}
-\bibcite{qi2024mirage}{14}
-\bibcite{reimers2019sentencebert}{15}
-\bibcite{su2024conflictbank}{16}
-\bibcite{vandort2026cite}{17}
-\bibcite{wallat2025correctness}{18}
-\bibcite{yang2024qwen25}{19}
-\gdef \@abspage@last{11}
+\bibcite{azaria2023lying}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{12}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{7}{12}{Conclusion}{section.7}{}}
+\bibcite{belinkov2022probes}{2}
+\bibcite{burns2023latent}{3}
+\bibcite{gao2023citations}{4}
+\bibcite{gemmateam2025gemma3}{5}
+\bibcite{guu2020realm}{6}
+\bibcite{izacard2021fid}{7}
+\bibcite{kwiatkowski2019natural}{8}
+\bibcite{lewis2020rag}{9}
+\bibcite{li2023iti}{10}
+\bibcite{liu2023verifiability}{11}
+\bibcite{mallen2023popqa}{12}
+\bibcite{meng2022rome}{13}
+\bibcite{grattafiori2024llama3}{14}
+\bibcite{nanda2022transformerlens}{15}
+\bibcite{petroni2021kilt}{16}
+\bibcite{qi2024mirage}{17}
+\bibcite{yang2024qwen25}{18}
+\bibcite{reimers2019sentencebert}{19}
+\bibcite{su2024conflictbank}{20}
+\bibcite{vandort2026cite}{21}
+\bibcite{wallat2025correctness}{22}
+\gdef \@abspage@last{14}

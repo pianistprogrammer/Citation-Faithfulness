@@ -1,0 +1,18 @@
+{
+  "included_figures": [
+    {
+      "file": "paper/figures/conflictbank_context_shift.pdf",
+      "reason": "Shows how outputs shift from no-context answers to conflict-context answers. The paper uses this figure instead of repeating the same ConflictBank result in a table."
+    }
+  ],
+  "not_included": [
+    {
+      "candidate": "probe-layer AUROC curves",
+      "reason": "They add visual complexity without improving the main explanation. The selected probe results are clearer as a compact table."
+    },
+    {
+      "candidate": "mechanistic patching heatmaps",
+      "reason": "They are dense and harder to read. The main finding is already simple: selected early components did not produce successful generation-level edits."
+    }
+  ]
+}
