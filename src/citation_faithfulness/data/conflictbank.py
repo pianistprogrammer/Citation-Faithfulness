@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 from datasets import load_dataset
+from tqdm import tqdm
 
 from citation_faithfulness.behavioral.statements import normalize
 from citation_faithfulness.generation.generate import generate
@@ -65,7 +66,13 @@ def classify(answer: str, original: str, conflict: str) -> str:
     return "AMBIGUOUS"
 
 
-def run(model_id: str, force: bool = False, loaded: LoadedModel | None = None) -> Path:
+def run(
+    model_id: str,
+    force: bool = False,
+    max_rows: int | None = None,
+    max_new_tokens: int = 256,
+    loaded: LoadedModel | None = None,
+) -> Path:
     slug = model_id.replace("/", "--").lower()
     output = ARTIFACTS / "conflictbank" / f"{slug}.parquet"
     existing = pd.read_parquet(output) if output.exists() and not force else pd.DataFrame()
@@ -75,14 +82,21 @@ def run(model_id: str, force: bool = False, loaded: LoadedModel | None = None) -
         raise FileNotFoundError("Run data prepare-conflictbank first")
     loaded = loaded or load_model(model_id)
     records = existing.to_dict("records")
+    pending = []
     for row in pd.read_parquet(source).to_dict("records"):
         if str(row["example_id"]) in done:
             continue
+        pending.append(row)
+    if max_rows is not None:
+        pending = pending[:max_rows]
+    for row in tqdm(pending, desc=f"ConflictBank: {slug}", unit="row"):
         no_context = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": f"Question: {row['question']}"}]
         with_context = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": f"Document [1]:\n{row['conflicting_evidence']}\n\nQuestion: {row['question']}"}]
-        no_answer, _, _ = generate(loaded, no_context)
-        conflict_answer, _, _ = generate(loaded, with_context)
+        no_answer, _, _ = generate(loaded, no_context, max_new_tokens=max_new_tokens)
+        conflict_answer, _, _ = generate(loaded, with_context, max_new_tokens=max_new_tokens)
         records.append({**row, "model_id": model_id, "model_revision": loaded.revision, "no_context_answer": no_answer, "conflict_context_answer": conflict_answer, "no_context_class": classify(no_answer, row["original_answer"], row["conflicting_answer"]), "conflict_context_class": classify(conflict_answer, row["original_answer"], row["conflicting_answer"])})
+        output.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(records).to_parquet(output, index=False)
     output.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_parquet(output, index=False)
     write_manifest(f"conflictbank run --model {model_id}", {model_id: loaded.revision})

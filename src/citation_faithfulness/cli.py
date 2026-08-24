@@ -90,7 +90,13 @@ def behavioral_run(
 def behavioral_metrics(): emit(compute_metrics())
 
 @conflict_app.command("run")
-def conflict_run(model: str = typer.Option(..., "--model"), force: bool = False): emit(run_conflictbank(model, force))
+def conflict_run(
+    model: str = typer.Option(..., "--model"),
+    force: bool = False,
+    max_rows: int | None = typer.Option(None, "--max-rows", help="Run only the next N unfinished ConflictBank examples."),
+    max_new_tokens: int = typer.Option(256, "--max-new-tokens", help="Maximum new tokens per answer."),
+):
+    emit(run_conflictbank(model, force, max_rows=max_rows, max_new_tokens=max_new_tokens))
 
 @conflict_app.command("metrics")
 def conflict_metrics(): emit(conflict_metrics_fn())
@@ -99,22 +105,57 @@ def conflict_metrics(): emit(conflict_metrics_fn())
 def mechanistic_pairs(force: bool = False): emit(build_pairs(force))
 
 @mechanistic_app.command("select-examples")
-def mechanistic_select(force: bool = False): emit(select_examples(force))
+def mechanistic_select(
+    force: bool = False,
+    batch_size: int = typer.Option(10, "--batch-size", help="Checkpoint and clear accelerator cache after this many candidate pairs."),
+    target_examples: int = typer.Option(31, "--target-examples", help="Number of qualifying mechanistic examples to select."),
+    max_pairs: int | None = typer.Option(None, "--max-pairs", help="Scan only the next N unfinished candidate pairs, then stop."),
+):
+    emit(select_examples(force, batch_size=batch_size, target_examples=target_examples, max_pairs=max_pairs))
 
 @mechanistic_app.command("patch-residual")
-def patch_residual(force: bool = False): emit(patch("residual", force))
+def patch_residual(
+    force: bool = False,
+    batch_size: int = typer.Option(1, "--batch-size", help="Checkpoint and clear accelerator cache after this many selected examples."),
+    max_examples: int | None = typer.Option(None, "--max-examples", help="Patch only the next N unfinished selected examples, then stop."),
+):
+    emit(patch("residual", force, batch_size=batch_size, max_examples=max_examples))
 
 @mechanistic_app.command("patch-mlp")
-def patch_mlp(force: bool = False): emit(patch("mlp", force))
+def patch_mlp(
+    force: bool = False,
+    batch_size: int = typer.Option(1, "--batch-size", help="Checkpoint and clear accelerator cache after this many selected examples."),
+    max_examples: int | None = typer.Option(None, "--max-examples", help="Patch only the next N unfinished selected examples, then stop."),
+):
+    emit(patch("mlp", force, batch_size=batch_size, max_examples=max_examples))
 
 @mechanistic_app.command("patch-heads")
-def patch_heads(force: bool = False): emit(patch("heads", force)); emit(select_components())
+def patch_heads(
+    force: bool = False,
+    batch_size: int = typer.Option(1, "--batch-size", help="Checkpoint and clear accelerator cache after this many selected examples."),
+    max_examples: int | None = typer.Option(None, "--max-examples", help="Patch only the next N unfinished selected examples, then stop."),
+):
+    result = patch("heads", force, batch_size=batch_size, max_examples=max_examples)
+    emit(result)
+    if result.name == "head_patching.parquet": emit(select_components())
 
 @mechanistic_app.command("validate-interventions")
-def validate_interventions(force: bool = False): emit(validate_mechanistic(force))
+def validate_interventions(
+    force: bool = False,
+    batch_size: int = typer.Option(1, "--batch-size", help="Checkpoint and clear accelerator cache after this many examples."),
+    max_examples: int | None = typer.Option(None, "--max-examples", help="Validate only the next N unfinished examples, then stop."),
+    max_new_tokens: int = typer.Option(256, "--max-new-tokens", help="Maximum new tokens per validation generation."),
+):
+    emit(validate_mechanistic(force, batch_size=batch_size, max_examples=max_examples, max_new_tokens=max_new_tokens))
 
 @probe_app.command("extract")
-def probe_extract(model: str = typer.Option(..., "--model"), force: bool = False): emit(extract_features(model, force))
+def probe_extract(
+    model: str = typer.Option(..., "--model"),
+    force: bool = False,
+    batch_size: int = typer.Option(10, "--batch-size", help="Checkpoint and clear accelerator cache after this many probe rows."),
+    max_rows: int | None = typer.Option(None, "--max-rows", help="Extract only the next N unfinished probe rows, then stop."),
+):
+    emit(extract_features(model, force, batch_size=batch_size, max_rows=max_rows))
 
 @probe_app.command("split")
 def probe_split(force: bool = False): emit(write_splits(force))
