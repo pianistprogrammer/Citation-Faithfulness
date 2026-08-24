@@ -1,0 +1,125 @@
+\begin{thebibliography}{10}
+
+\bibitem{belinkov2022probes}
+Yonatan Belinkov.
+\newblock Probing classifiers: Promises, shortcomings, and advances.
+\newblock {\em Computational Linguistics}, 48(1):207--219, 2022.
+
+\bibitem{gao2023citations}
+Tianyu Gao, Howard Yen, Jiatong Yu, and Danqi Chen.
+\newblock Enabling large language models to generate text with citations.
+\newblock In {\em Proceedings of the 2023 Conference on Empirical Methods in
+  Natural Language Processing}, pages 6465--6488, 2023.
+
+\bibitem{gemmateam2025gemma3}
+{Gemma Team}.
+\newblock {Gemma 3} technical report.
+\newblock {\em arXiv preprint arXiv:2503.19786}, 2025.
+
+\bibitem{grattafiori2024llama3}
+Aaron Grattafiori et~al.
+\newblock The {Llama 3} herd of models.
+\newblock {\em arXiv preprint arXiv:2407.21783}, 2024.
+
+\bibitem{guu2020realm}
+Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasupat, and Ming-Wei Chang.
+\newblock {REALM}: Retrieval-augmented language model pre-training.
+\newblock In {\em Proceedings of the 37th International Conference on Machine
+  Learning}, pages 3929--3938, 2020.
+
+\bibitem{izacard2021fid}
+Gautier Izacard and Edouard Grave.
+\newblock Leveraging passage retrieval with generative models for open domain
+  question answering.
+\newblock In {\em Proceedings of the 16th Conference of the European Chapter of
+  the Association for Computational Linguistics}, pages 874--880, 2021.
+
+\bibitem{kwiatkowski2019natural}
+Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur
+  Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin,
+  Kenton Lee, Kristina Toutanova, Llion Jones, Matthew Kelcey, Ming-Wei Chang,
+  Andrew~M. Dai, Jakob Uszkoreit, Quoc Le, and Slav Petrov.
+\newblock Natural questions: A benchmark for question answering research.
+\newblock {\em Transactions of the Association for Computational Linguistics},
+  7:453--466, 2019.
+
+\bibitem{lewis2020rag}
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Vladimir Karpukhin, Naman Goyal,
+  Heinrich Kuttler, Mike Lewis, Wen-tau Yih, Tim Rocktaschel, Sebastian Riedel,
+  and Douwe Kiela.
+\newblock Retrieval-augmented generation for knowledge-intensive {NLP} tasks.
+\newblock In {\em Advances in Neural Information Processing Systems}, 2020.
+
+\bibitem{liu2023verifiability}
+Nelson~F. Liu, Tianyi Zhang, and Percy Liang.
+\newblock Evaluating verifiability in generative search engines.
+\newblock In {\em Findings of the Association for Computational Linguistics:
+  EMNLP 2023}, 2023.
+
+\bibitem{mallen2023popqa}
+Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Daniel Khashabi, and
+  Hannaneh Hajishirzi.
+\newblock When not to trust language models: Investigating effectiveness of
+  parametric and non-parametric memories.
+\newblock In {\em Proceedings of the 61st Annual Meeting of the Association for
+  Computational Linguistics}, pages 9802--9822, 2023.
+
+\bibitem{meng2022rome}
+Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov.
+\newblock Locating and editing factual associations in {GPT}.
+\newblock In {\em Advances in Neural Information Processing Systems}, 2022.
+
+\bibitem{nanda2022transformerlens}
+Neel Nanda and Joseph Bloom.
+\newblock {TransformerLens}.
+\newblock Software library for mechanistic interpretability, 2022.
+
+\bibitem{petroni2021kilt}
+Fabio Petroni, Aleksandra Piktus, Angela Fan, Patrick Lewis, Majid Yazdani,
+  Nicola De~Cao, James Thorne, Yacine Jernite, Vladimir Karpukhin, Jean
+  Maillard, Vassilis Plachouras, Tim Rocktaschel, and Sebastian Riedel.
+\newblock {KILT}: A benchmark for knowledge intensive language tasks.
+\newblock In {\em Proceedings of the 2021 Conference of the North American
+  Chapter of the Association for Computational Linguistics}, pages 2523--2544,
+  2021.
+
+\bibitem{qi2024mirage}
+Jirui Qi, Gabriele Sarti, Raquel Fern{\'a}ndez, and Arianna Bisazza.
+\newblock Model internals-based answer attribution for trustworthy
+  retrieval-augmented generation.
+\newblock In {\em Proceedings of the 2024 Conference on Empirical Methods in
+  Natural Language Processing}, pages 6037--6053, 2024.
+
+\bibitem{reimers2019sentencebert}
+Nils Reimers and Iryna Gurevych.
+\newblock Sentence-{BERT}: Sentence embeddings using siamese {BERT}-networks.
+\newblock In {\em Proceedings of the 2019 Conference on Empirical Methods in
+  Natural Language Processing and the 9th International Joint Conference on
+  Natural Language Processing}, pages 3982--3992, 2019.
+
+\bibitem{su2024conflictbank}
+Zhen Su et~al.
+\newblock {ConflictBank}: A benchmark for evaluating the influence of knowledge
+  conflicts in large language models.
+\newblock In {\em Advances in Neural Information Processing Systems}, 2024.
+
+\bibitem{vandort2026cite}
+Ian van Dort and Maria Heuss.
+\newblock How do {LLMs} cite? a mechanistic interpretation of attribution in
+  retrieval-augmented generation.
+\newblock In {\em Proceedings of the 48th European Conference on Information
+  Retrieval}, 2026.
+\newblock To appear.
+
+\bibitem{wallat2025correctness}
+Jonas Wallat, Maria Heuss, Maarten de~Rijke, and Avishek Anand.
+\newblock Correctness is not faithfulness in {RAG} attributions.
+\newblock In {\em Proceedings of the 2025 International ACM SIGIR Conference on
+  Innovative Concepts and Theories in Information Retrieval}, 2025.
+
+\bibitem{yang2024qwen25}
+An~Yang et~al.
+\newblock {Qwen2.5} technical report.
+\newblock {\em arXiv preprint arXiv:2412.15115}, 2024.
+
+\end{thebibliography}
