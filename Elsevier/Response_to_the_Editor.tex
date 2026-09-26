@@ -1,0 +1,138 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+
+\title{Response to the Editor}
+\author{Citation Faithfulness in Open-Weight Retrieval-Augmented Generation}
+\date{}
+
+\begin{document}
+\maketitle
+
+We thank the Editor for the careful assessment and constructive guidance. We have revised the manuscript, the anonymized review copy, and the submission highlights. The revised files are single-column and the changes below are incorporated in both manuscript versions unless stated otherwise.
+
+\section*{1. Highlights}
+
+\textbf{Editorial comment:} The highlights should state what is unique about the research and should be concise.
+
+\textbf{Response:} We replaced the generic highlights with five result-led statements. They now identify the distinctive combination of behavioral interventions, conflict evaluation, hidden-state probes, and mechanistic validation. They also report the principal observed rates and probe range. Each highlight is one sentence and is approximately 15--30 words.
+
+\section*{2. Abstract}
+
+\textbf{Editorial comment:} Reduce background and provide specific information about the data, sample, and findings.
+
+\textbf{Response:} We shortened the background opening and replaced it with an evidence-led abstract. The revised abstract reports the 1,444 Natural Questions queries, 2,000 ConflictBank examples per model, 31 PopQA mechanistic pairs, model-specific post-rationalization rates, probe AUROC values, and the 7/58 mechanistic validation counts. It remains a single paragraph and does not add methodological background that is better placed in the main text.
+
+\section*{3. Explicit research objectives}
+
+\textbf{Editorial comment:} State the research objective(s) explicitly, preferably in a separate section.
+
+\textbf{Response:} We added a separate ``Research Objectives'' section with one overarching objective and three numbered research questions. The questions distinguish behavioral sensitivity, representation-level prediction, and causal control of citation generation.
+
+\section*{4. Dataset and sample description}
+
+\textbf{Editorial comment:} Provide an explicit description of the datasets and samples.
+
+\textbf{Response:} We added a dedicated ``Datasets'' subsection and clarified the role of each resource. The revision identifies Natural Questions as the 1,444-query behavioral sample, KILT Wikipedia as the evidence population, the top-five retrieval and 100-token chunking procedure, ConflictBank as 2,000 examples per model, and PopQA as the source of 31 selected capital-city pairs. We also explain why intervention counts are lower than the full question sample and state that probe features come from our own interventions.
+
+\section*{5. Theoretical and practical implications}
+
+\textbf{Editorial comment:} Clarify the contribution relative to existing work and add an explicit discussion of implications.
+
+\textbf{Response:} We expanded the recent-work synthesis in ``Related Work'' and added a dedicated ``Theoretical and Practical Implications'' subsection to the Discussion. The theoretical contribution is the separation of textual support, behavioral evidence reliance, representation-level predictability, and causal intervention. The practical contribution is a proposed monitoring workflow that uses calibrated probes for screening and document-level verification or controlled regeneration for flagged cases. We also state the calibration requirements created by class imbalance and low cited-other availability.
+
+\section*{6. Single-column review format}
+
+\textbf{Editorial comment:} Single-column the manuscript for review.
+
+\textbf{Response:} We changed the document class from \texttt{cas-dc} to \texttt{cas-sc} in both the identified-author and anonymized manuscript sources. Double-column-only figures and tables were converted to their single-column forms.
+
+\section*{7. Copy editing and accessibility}
+
+\textbf{Editorial comment:} The manuscript requires thorough copy editing and accessible, coherent English.
+
+\textbf{Response:} We copy-edited the abstract, research framing, dataset description, recent-literature synthesis, Discussion, implications, and conclusion for shorter sentences, consistent terminology, and clearer distinctions among correctness, faithfulness, prediction, and causality. We expanded definitions before introducing the metrics and removed several compressed or generic statements. The revised manuscript uses plain, direct English intended to be accessible to the international IP\&M readership, including readers who are not native English speakers. We reduced unnecessary idioms and dense phrasing, introduced technical terms before using them, and used consistent names for models, datasets, intervention conditions, and metrics so that readers can follow the argument without relying on specialist shorthand.
+
+\section*{8. Additional detail on prior literature, methods, data, and implications}
+
+\textbf{Editorial comment:} Use the available space to provide more detail.
+
+\textbf{Response:} We used the available space to add the explicit objectives and sample description, explain the relationship among the four experimental components, give the inclusion and count logic for each dataset, and expand the theoretical and practical implications. We retained the reported limitations rather than presenting the additional detail as stronger evidence than the experiments support.
+
+\section*{9. Literature connected to information and computer science}
+
+\textbf{Editorial comment:} Update the literature review with recent work from information science and computer science, including recent work relevant to the manuscript topic.
+
+\textbf{Response:} We revised the literature review to make the computing and information-science positioning explicit. The revision now connects the study to recent work on model-internal attribution (2024), knowledge conflict (2024), citation faithfulness (2025), and mechanistic citation analysis (2026), alongside foundational RAG, attributed-generation, probing, and mechanistic-interpretability work. The revised paragraph explains what these strands establish and what the present combination adds.
+
+\section*{10. Reference consistency and completeness}
+
+\textbf{Editorial comment:} Tidy the reference list and use a consistent standard style.
+
+\textbf{Response:} We retained the journal's CAS bibliography style and checked the cited keys against the bibliography used by both manuscript sources. The bibliography now consistently identifies conference or journal venues, publication years, page ranges where available, DOIs for the cited proceedings articles where available, and stable URLs for model cards and software. Recent works added to the literature discussion use the same BibTeX conventions as the earlier references.
+
+\section*{11. IP\&M structure and presentation}
+
+\textbf{Editorial comment:} Review recent IP\&M articles and the author guidelines for structure and presentation.
+
+\textbf{Response:} We revised the manuscript toward a clearer IP\&M-style empirical structure: a concise abstract, explicit objectives, a separated literature review, reproducible methodology, results, discussion, implications, limitations, and conclusion. We also prepared a single-column review version and retained the anonymized source for review submission.
+
+\section*{12. Reproducibility and protocol details}
+
+\textbf{Editorial comment:} Provide enough methodological detail for readers to understand and reproduce the experiments.
+
+\textbf{Response:} We added blue-highlighted methodological detail to both manuscript versions. The revised text now states the fixed seed (42), official model chat templates, deterministic decoding (\texttt{do\_sample=false}, one beam, 256 maximum new tokens), five numbered documents per behavioral prompt, the complete system-prompt rules, and the saved prompt hash, input length, raw output, and parsed citations. We also specify the target-selection rule, the maximum eight-token target phrase, the three intervention conditions, phrase insertion, normalization, and the exact post-rationalization label rule.
+
+\textcolor{blue}{The revision also states that the original supporting document remains in the relevant-uncited and cited-other contexts. The random condition replaces document [5], including the original source when it occupied that slot in 18 Llama, 37 Qwen, and 113 Gemma cases. We now identify this position and source-retention asymmetry as a limitation rather than presenting the random condition as a strict control.}
+
+\section*{13. Behavioral sample funnel and interpretation}
+
+\textbf{Editorial comment:} Clarify the denominators and the comparability of model-specific behavioral rates.
+
+\textbf{Response:} We added a blue-highlighted funnel summary to the Results. Each model has 1,444 original generations. Parseable cited answers numbered 629 for Llama, 916 for Qwen, and 1,106 for Gemma. Target extraction produced 274, 326, and 829 question-level intervention sets, respectively; available cited-other cases numbered only 23, 59, and 117. We now state that the rates use different conditional funnels and that cited-other percentages should not be interpreted as a definitive cross-model ranking.
+
+\textcolor{blue}{The revised Limitations section also states that the pipeline did not include no-insertion or placebo-insertion arms and did not randomize document position. These controls were not rerun because they require additional generation experiments; accordingly, the manuscript now describes the observed rates as behavior under answer-string insertion rather than as an isolated insertion effect.}
+
+\section*{14. ConflictBank interpretation}
+
+\textbf{Editorial comment:} Clarify the limitation of the closed-book baseline in the conflict experiment.
+
+\textbf{Response:} We revised the abstract, Results, Discussion, and Limitations to qualify this finding. The no-context string classifier was ambiguous for 1,994 Llama, 1,942 Qwen, and 1,916 Gemma examples. We therefore no longer present the result as a clean measure of overriding parametric knowledge. The revised text calls it a context-conditioned answer-class analysis and describes it as evidence of context sensitivity under the stated classifier. We did not claim a new closed-book alias-matching or human-validated judge because that additional analysis was not part of the completed experiment.
+
+\section*{15. Mechanistic analysis and scope}
+
+\textbf{Editorial comment:} Avoid overstating the mechanistic localization and intervention results.
+
+\textbf{Response:} We revised the mechanistic Results and Abstract in blue. The manuscript now states that no positive components passed the prespecified denoising threshold, and it reframes the outcome as failed localization above that threshold rather than identification of a citation mechanism. It reports the raw validation outcomes, 0/7 missed-citation corrections and 0/58 spurious-citation corrections, instead of relying only on percentages. It also specifies that the citation-logit difference was measured at the final prompt position before generation and that the patching tables covered token positions 102--117. The mechanistic contribution is explicitly described as a replication-and-extension attempt related to van Dort and Heuss, while the behavioral, conflict, and probe experiments provide the broader extension.
+
+\section*{16. Probe sample sizes and uncertainty}
+
+\textbf{Editorial comment:} Resolve the apparent discrepancy between feature-row counts and independent probe examples.
+
+\textbf{Response:} We clarified that the reported 15,328 Llama, 16,912 Qwen, and 70,272 Gemma rows include features extracted across all layers and are not independent examples. At the selected layer, the test sets contained 71 Llama rows with 1 positive label, 100 Qwen rows with 2 positives, and 226 Gemma rows with 4 positives. The corresponding training/validation positive counts were 7/2, 32/7, and 28/3. We added grouped bootstrap percentile intervals based on 1,000 question-level resamples: AUROC intervals were [0.877, 0.973] for Llama, [0.928, 1.000] for Qwen, and [0.613, 1.000] for Gemma. The corresponding AUPRC intervals were [0.125, 0.500], [0.143, 1.000], and [0.016, 1.000].
+
+\textcolor{blue}{Because the positive counts are small, especially for Llama, the abstract and Discussion now describe these as uncertain observed test-sample estimates rather than broad model-level claims. We also state that cross-condition probe transfer and a manual label audit were not run, and retain them as future validation work.}
+
+\section*{17. Baselines and analysis definitions}
+
+\textbf{Editorial comment:} Make the baseline construction and analysis definitions explicit.
+
+\textbf{Response:} We added a blue description of the three implemented baselines. Lexical overlap is the Jaccard similarity between normalized target-statement and adversarial-document tokens. The citation baseline is the marker-versus-period logit margin. The semantic baseline is cosine similarity between question and adversarial-document embeddings from \texttt{sentence-transformers/all-mpnet-base-v2}. All baseline scores use the same question-level test split as the selected-layer probes. Behavioral intervals use Wilson 95\% intervals, and probe intervals use grouped question-level bootstrap resampling.
+
+\section*{18. Double-blind synchronization and reference audit}
+
+\textbf{Editorial comment:} Ensure that the review copy and references remain consistent.
+
+\textbf{Response:} We synchronized the identified-author and double-blind sources. Both now contain the separate Datasets section, blue dataset summary table, revised Related Work discussion, reproducibility details, funnel reporting, qualified ConflictBank interpretation, mechanistic caveats, probe uncertainty, and updated Limitations. We also audited unresolved citations in both builds and replaced the missing keys \texttt{maheshwari2025citefix}, \texttt{deng2026remembering}, and \texttt{asai2024self} with existing, relevant bibliography entries. Both manuscript sources compile; the double-blind source retains only the existing anonymous-title Hyperref and font-size warnings.
+
+\section*{Closing}
+
+We appreciate the opportunity to revise the manuscript. We believe the revised version is clearer about its objective, sample, evidence, theoretical contribution, practical relevance, and limitations, and that the new response document makes the changes straightforward to verify.
+
+\end{document}
