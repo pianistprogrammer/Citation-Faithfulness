@@ -17,14 +17,14 @@
 \def\textpagefraction{.001}
 \sloppy
 
-\shorttitle{Citation Faithfulness in RAG}
+\shorttitle{Stress-Testing Citation Faithfulness}
 \ifdefined\blindreview
     \shortauthors{Anonymous}
 \else
     \shortauthors{Abimbola and Kuaban}
 \fi
 
-\title[mode = title]{Citation Faithfulness in Open-Weight Retrieval-Augmented Generation}
+\title[mode = title]{Stress-Testing Citation Faithfulness in Open-Weight Retrieval-Augmented Generation}
 
 \ifdefined\blindreview
     \author{Anonymous Authors}
@@ -48,8 +48,7 @@
 \cortext[1]{Corresponding author}
 
 \begin{abstract}
-\color{blue}
-Citation correctness does not establish that a retrieval-augmented generation system used the cited document. We evaluate this distinction in Llama-3.1-8B-Instruct, Qwen2.5-7B-Instruct, and Gemma-3-12B-it using 1,444 Natural Questions queries with KILT Wikipedia retrieval, 2,000 ConflictBank examples per model, a Llama-only mechanistic set of 31 PopQA capital-city pairs, and hidden-state probes. When the answer phrase was inserted into forged documents, random documents were rarely cited, whereas relevant but originally uncited documents reached 9.7\% for Qwen and cited-other documents reached 21.6\% for Qwen, 17.8\% for Gemma, and 9.1\% for Llama. \textcolor{blue}{Under a string-matching classifier that often marked closed-book answers as ambiguous, supplied conflict evidence increased context matches.} \textcolor{blue}{In the observed test samples, probes achieved AUROC values of 0.943, 0.969, and 0.831 for Llama, Qwen, and Gemma, respectively; the small positive counts make these estimates especially uncertain.} \textcolor{blue}{The mechanistic localization found no positive components at the prespecified threshold; scaling selected components corrected 0/7 missed-citation and 0/58 spurious-citation cases.} The results show that behavioral post-rationalization is measurable, context-sensitive, and partly decodable from internal states, while the tested causal intervention was insufficient for generation-level control.
+A document can support a generated claim without having influenced it. Extending prior citation-intervention work, we stress-test citation assignment in Llama-3.1-8B-Instruct, Qwen2.5-7B-Instruct, and Gemma-3-12B-it on 1,444 Natural Questions queries with KILT Wikipedia retrieval. We insert a target answer phrase into a random document, a relevant but originally uncited document, or a document cited elsewhere, then measure how often a recovered statement cites the altered document. Conditional adversarial-citation rates were 0--1.1\% for random documents, reached 9.7\% for relevant-uncited documents, and were 9.1\%, 21.6\%, and 17.8\% for cited-other documents in Llama, Qwen, and Gemma. These are descriptive outcomes with different eligible and recovered denominators; document position and retention of the original source also differ across conditions. They do not isolate a relevance effect or reveal the source that caused an answer. Auxiliary analyses likewise do not validate provenance: ConflictBank answer matching is limited by predominantly ambiguous closed-book outputs, corrected hidden-state probes score below simple baselines, and selected component scaling corrects 0/7 missed and 0/58 spurious citations. The study provides a reproducible cross-model stress test of citation assignment and identifies the further controls needed before such behavior can support claims of faithful attribution.
 \end{abstract}
 
 \begin{keywords}
@@ -73,25 +72,16 @@ Wallat et al. formalize this distinction for RAG attributions and introduce post
 
 Open-weight instruction-tuned models are useful for this study because they support controlled generation experiments across model families while providing access to hidden states and intermediate activations. We can therefore compare how models behave under document interventions, what information their representations contain, and whether selected internal components can change citation behavior \cite{leon2025gpt}. Access to activations does not, however, make faithfulness directly visible: a good probe demonstrates predictability, a successful patch demonstrates a causal effect under one intervention, and neither alone proves that a citation fully explains the model's reasoning.
 
-\textcolor{blue}{The Research Objectives section formalizes these questions: behavioral sensitivity to forged evidence, context sensitivity under knowledge conflict, and the predictability and causal control of citation behavior.}
-
-This paper studies citation faithfulness in three open-weight instruction-tuned RAG models: Llama-3.1-8B-Instruct, Qwen2.5-7B-Instruct, and Gemma-3-12B-it. We make four contributions. First, we measure post-rationalization on Natural Questions with KILT Wikipedia retrieval under random, relevant-uncited, and cited-other document interventions. Second, we use ConflictBank to study what models do when supplied context conflicts with stored knowledge. Third, we test a focused causal hypothesis about Llama-3.1-8B-Instruct with activation patching on PopQA capital-city examples. Fourth, we test whether post-rationalization labels can be decoded from hidden states, and whether these probes beat lexical, logit-margin, and embedding-similarity baselines. The theoretical contribution is a framework that distinguishes citation correctness, behavioral evidence reliance, representation-level predictability, and causal control, thereby clarifying how this study differs from work that evaluates only whether a cited passage supports a claim. The practical contribution is an evaluation and monitoring strategy that combines intervention-based faithfulness tests with calibrated hidden-state screening, helping RAG developers identify citations that are supportable but may not reflect the evidence used during generation. Together, these experiments separate behavior, causal mechanisms, and prediction without treating any one of them as the same thing as citation correctness.
+The primary contribution is a cross-model stress test of how citations follow answer-bearing insertions under three document-selection conditions. We extend the intervention approach of Wallat et al. \cite{wallat2025correctness} with explicit condition-availability and statement-recovery denominators. The comparison is descriptive: the conditions also differ in document position, source retention, and eligibility, so they cannot identify an isolated relevance effect or establish the provenance of a generated claim. ConflictBank, activation patching, and hidden-state probing are auxiliary diagnostics that test whether other measurements corroborate the behavioral interpretation. Their limited or negative results narrow that interpretation rather than supplying independent proof of a causal citation mechanism.
 
 The rest of the paper is organized as follows. Section~\ref{sec:related-work} reviews work on RAG, attributed generation, knowledge conflicts, mechanistic interpretability, and probing. Section~\ref{sec:datasets} describes the datasets and model checkpoints, while Section~\ref{sec:methodology} describes the research architecture and experimental methods. Section~\ref{sec:results} presents the behavioral, conflict, mechanistic, and probe results. Section~\ref{sec:discussion} discusses what the results mean for citation faithfulness. Sections~\ref{sec:limitations} and~\ref{sec:conclusion} describe limitations and conclusions.
 
-\section{Research Objectives}
-\label{sec:objectives}
+\subsection{Research Objectives}
+\label{subsec:objectives}
 
 \color{blue}
-The objective of this study is to determine whether citations in open-weight RAG systems reflect the evidence used during generation, rather than merely evidence that supports the final answer. We address this objective through three research questions:
-
-\begin{enumerate}
-    \item \textbf{RQ1:} How often do models recover an answer-bearing phrase from a forged document and cite that document, and how does the rate vary with document relevance and citation context?
-    \item \textbf{RQ2:} When supplied evidence conflicts with stored knowledge, how strongly do the models follow the supplied context?
-    \item \textbf{RQ3:} Can post-rationalization be predicted from hidden states, and can activation interventions change citation behavior during full generation?
-\end{enumerate}
-
-These questions separate three claims that are often conflated: behavioral sensitivity to an intervention, predictive information in model representations, and causal control of generation. The study therefore treats citation correctness as a necessary but insufficient property of citation faithfulness.
+This study asks how citation assignment changes when an answer phrase is inserted into a retrieved document. It uses an operational outcome---recovery of the target statement together with citation of the altered document---rather than claiming to observe which source actually caused the answer. The primary research question is: how often does this outcome occur across three document conditions and three open-weight models, after accounting for intervention availability and statement recovery? Two auxiliary questions ask whether knowledge-conflict answers and citations provide supporting context, and whether hidden-state probes or activation interventions offer independent predictive or causal evidence. These auxiliary analyses cannot validate the primary attribution claim on their own.
+\color{black}
 
 \section{Related Work}
 \label{sec:related-work}
@@ -102,7 +92,7 @@ Attributed generation makes sources visible by asking systems to attach referenc
 
 RAGTruth provides complementary evaluation data with response-level and word-level annotations of hallucinations in retrieval-augmented outputs \cite{niu2024ragtruth}. Such annotations identify unsupported or contradictory content; citation-faithfulness interventions additionally ask whether the cited evidence influenced generation.
 
-Citation faithfulness asks whether an emitted citation reflects the evidence that influenced generation. Wallat et al. define the difference between correctness and faithfulness in RAG and introduce adversarial interventions \cite{wallat2025correctness}. Their method places answer-bearing strings in documents that were not the original source of support. If a model repeats the target statement and cites that inserted document, this is behavioral evidence of post-rationalization. Qi et al. study faithful attribution from inside the model by using context sensitivity and saliency to estimate which retrieved documents affect answer tokens \cite{qi2024mirage}. These approaches answer different questions. Adversarial tests show behavior under controlled input changes. Internal attribution methods estimate influence in one forward pass.
+Citation faithfulness asks whether an emitted citation reflects the evidence that influenced generation. Wallat et al. define the difference between correctness and faithfulness in RAG and introduce adversarial interventions \cite{wallat2025correctness}. Their method places answer-bearing strings in documents that were not the original source of support. If a model repeats the target statement and cites that inserted document, this is an operational adversarial-citation event; it does not by itself identify the source that caused the answer. Qi et al. study faithful attribution from inside the model by using context sensitivity and saliency to estimate which retrieved documents affect answer tokens \cite{qi2024mirage}. These approaches answer different questions. Adversarial tests show behavior under controlled input changes. Internal attribution methods estimate influence in one forward pass.
 
 This distinction follows the broader interpretability requirement that explanations reflect model behavior, rather than merely appear plausible to a reader \cite{jacovi2020faithful}. The attention-as-explanation debate illustrates why that requirement needs explicit tests: Jain and Wallace find that substantially different attention distributions can yield equivalent predictions \cite{jain2019attention}, while Wiegreffe and Pinter challenge the generality of that conclusion and propose additional model-aware diagnostics \cite{wiegreffe2019attention}. These studies motivate testing attribution claims under interventions rather than treating a visible weight or citation marker as sufficient evidence of faithful explanation.
 
@@ -110,15 +100,15 @@ This distinction follows the broader interpretability requirement that explanati
 
 The difference between retrieved evidence and stored model knowledge also appears in work on knowledge conflicts. Petroni et al. show that pretrained language models can recall relational facts through cloze queries without task-specific fine-tuning, establishing a basis for studying factual knowledge stored in model parameters \cite{petroni2019knowledge}. PopQA studies when models answer from stored knowledge and when outside evidence helps, with entity popularity as an important factor \cite{mallen2023popqa}. ConflictBank tests cases where supplied context conflicts with a model's stored knowledge and measures which source the model follows \cite{su2024conflictbank}. \textcolor{blue}{This line of work builds on earlier studies of parametric-contextual conflict: Longpre et al. formalize entity-substitution knowledge conflicts and show that models often default to memorized answers even when substituted context is provided \cite{longpre2021entity}, and Neeman et al. train models to output separate parametric and contextual answers so the two knowledge sources can be inspected independently \cite{neeman2023disentqa}. Xu et al. survey this broader area, distinguishing context-memory, inter-context, and intra-memory conflicts \cite{xu2024knowledgeconflicts}. Related work on parametric knowledge itself, such as TruthfulQA, shows that a model's stored answer is not always trustworthy either, since larger models can be more prone to reproduce common misconceptions \cite{lin2022truthfulqa}, which further motivates testing whether a citation reflects genuine reliance on supplied evidence rather than defaulting to either source.} Following the supplied context is related to citation faithfulness, but it is not the same thing. A context-matching answer shows that the model is sensitive to the supplied evidence. A faithful citation must also point to the document that actually supported the claim.
 
-Mechanistic interpretability gives tools for testing causal ideas inside a model. Geva et al. interpret transformer feed-forward layers as key-value memories whose keys match textual patterns and whose values induce distributions over the output vocabulary, providing a functional account of components examined in internal attribution studies \cite{geva2021memories}. Causal tracing and activation editing have found transformer components involved in factual recall, and they show that changing internal states can change model predictions \cite{meng2022rome}. TransformerLens provides hooks and activation caches that are commonly used for these patching experiments \cite{nanda2022transformerlens}. \textcolor{blue}{Beyond single-fact factual recall, activation patching has also been used to reverse-engineer complete multi-component circuits for a specific behavior, such as the indirect-object-identification circuit in GPT-2 small, which spans 26 attention heads across several layers \cite{wang2023ioi}; this illustrates that a behavior can depend on a distributed combination of components rather than on any single one, a pattern that recurs in our own mechanistic analysis.} The closest related work is by van Dort and Heuss, who study citation generation in Llama-3.1-8B-Instruct with activation patching on PopQA and a citation-token logit-difference metric \cite{vandort2026cite}. Their work shows how activation patching can be used to study citation-token behavior in a controlled setting. \textcolor{blue}{Our mechanistic experiment should be read as a replication-and-extension attempt rather than a new localization method: it applies a related citation-logit setup to a small PopQA capital-city sample, while the behavioral benchmark, conflict analysis, and hidden-state probes extend the evaluation beyond citation-token logits.}
+Mechanistic interpretability gives tools for testing causal ideas inside a model. Geva et al. interpret transformer feed-forward layers as key-value memories whose keys match textual patterns and whose values induce distributions over the output vocabulary, providing a functional account of components examined in internal attribution studies \cite{geva2021memories}. Causal tracing and activation editing have found transformer components involved in factual recall, and they show that changing internal states can change model predictions \cite{meng2022rome}. TransformerLens provides hooks and activation caches that are commonly used for these patching experiments \cite{nanda2022transformerlens}. \textcolor{blue}{Beyond single-fact factual recall, activation patching has also been used to reverse-engineer complete multi-component circuits for a specific behavior, such as the indirect-object-identification circuit in GPT-2 small, which spans 26 attention heads across several layers \cite{wang2023ioi}; this illustrates that a behavior can depend on a distributed combination of components rather than on any single one, a possibility that our limited mechanistic analysis cannot establish.} The closest related work is by van Dort and Heuss, who study citation generation in Llama-3.1-8B-Instruct with activation patching on PopQA and a citation-token logit-difference metric \cite{vandort2026cite}. Their work shows how activation patching can be used to study citation-token behavior in a controlled setting. \textcolor{blue}{Our mechanistic experiment should be read as a replication-and-extension attempt rather than a new localization method: it applies a related citation-logit setup to a small PopQA capital-city sample, while the behavioral benchmark, conflict analysis, and hidden-state probes extend the evaluation beyond citation-token logits.}
 
 Linear probes ask a different question: can a simple classifier recover a target property from a model representation? Prior work has used such methods to study whether language-model activations contain information about truth and uncertainty. Burns et al. recover latent answers to true-or-false questions by finding directions in activation space that satisfy logical consistency constraints, even without labeled examples \cite{burns2023latent}. Azaria and Mitchell train classifiers on hidden activations to distinguish true from false statements, including statements generated by the model itself \cite{azaria2023lying}. Li et al. train linear probes on attention-head activations to locate directions associated with truthful answers and then use those directions for inference-time intervention \cite{li2023iti}.
 
 These studies show that internal representations can support prediction of factual truth, latent knowledge, or semantic uncertainty. Our probe target is different: it is not whether an answer is factually correct or whether the model is uncertain, but whether a citation is post-rationalized under a controlled document intervention. This places citation faithfulness within the broader use of hidden-state probes for model monitoring while introducing an attribution-specific behavioral label. As with probing more generally, strong classification performance shows that information linked to the label is linearly available; it does not prove that the model uses the probed direction or that the direction causes the behavior \cite{belinkov2022probes}. Probe evidence must therefore be interpreted separately from causal intervention evidence.
 
-This distinction matters increasingly to information and computer science audiences. Model-internal attribution has been evaluated with context sensitivity and saliency \cite{qi2024mirage}; knowledge-conflict benchmarks now quantify how supplied evidence competes with parametric memory \cite{su2024conflictbank}; and mechanistic work examines citation-token behavior directly \cite{wallat2025correctness,vandort2026cite}. These studies provide complementary tools but do not jointly compare behavioral interventions, conflict sensitivity, causal patching, and representation-level prediction across several open-weight models. Building on them, this study connects the four methods in one reproducible pipeline and uses them to separate citation correctness from the stronger question of whether a citation reflects the evidence used during generation.
+This distinction matters increasingly to information and computer science audiences. Model-internal attribution has been evaluated with context sensitivity and saliency \cite{qi2024mirage}; knowledge-conflict benchmarks now quantify how supplied evidence competes with parametric memory \cite{su2024conflictbank}; and mechanistic work examines citation-token behavior directly \cite{wallat2025correctness,vandort2026cite}. Our contribution is a cross-model, three-condition descriptive stress test with explicit recovery and eligibility denominators. The question sample and answer-string intervention build on Wallat et al. \cite{wallat2025correctness}; the auxiliary conflict, patching, and probe analyses test the limits of stronger interpretations rather than constituting four independent demonstrations of citation faithfulness.
 
-\textcolor{blue}{Complementary studies reinforce the importance of evaluating retrieval and evidence use as separate parts of an information system. Li et al. formulate conversational question answering as generative retrieval, showing that passage selection is itself a central modeling problem rather than a transparent precondition for answer generation \cite{li2023gcoretrieval}. Liu et al. likewise show that query generation and the management of conversational context affect legal-case retrieval, illustrating how changes in the information supplied to a model can alter the evidence available for an answer \cite{liu2022legalretrieval}. For evaluation, Wang et al. develop a scalable cross-language fact-checking study over 4,500 claims in nine languages and report substantial variation across languages and models \cite{wang2026factchecking}. Together, these studies support a broader evaluation perspective: retrieval quality, contextual evidence selection, answer correctness, and the provenance of generated claims should be measured separately. Our study extends this perspective by testing whether the document named in a citation was behaviorally used, whether that signal is represented in hidden states, and whether targeted internal interventions can change it.}
+\textcolor{blue}{Complementary studies reinforce the importance of evaluating retrieval and evidence use as separate parts of an information system. Li et al. formulate conversational question answering as generative retrieval, showing that passage selection is itself a central modeling problem rather than a transparent precondition for answer generation \cite{li2023gcoretrieval}. Liu et al. likewise show that query generation and the management of conversational context affect legal-case retrieval, illustrating how changes in the information supplied to a model can alter the evidence available for an answer \cite{liu2022legalretrieval}. For evaluation, Wang et al. develop a scalable cross-language fact-checking study over 4,500 claims in nine languages and report substantial variation across languages and models \cite{wang2026factchecking}. Together, these studies support a broader evaluation perspective: retrieval quality, contextual evidence selection, answer correctness, and the provenance of generated claims should be measured separately. Our study adds a document-insertion stress test of citation assignment and reports where its auxiliary internal and knowledge-conflict diagnostics fail to identify provenance.}
 
 \section{Datasets}
 \label{sec:datasets}
@@ -127,7 +117,7 @@ This distinction matters increasingly to information and computer science audien
 The behavioral sample contains 1,444 unique Natural Questions identifiers and questions released with the experiments of Wallat et al. \cite{wallat2025correctness}. The questions originate from Natural Questions \cite{kwiatkowski2019natural}; the retrieved evidence comes from the full KILT Wikipedia knowledge source \cite{petroni2021kilt}. We converted Wikipedia pages into non-overlapping chunks of 100 whitespace tokens before BM25 retrieval and retained the top five chunks per query. Thus, Natural Questions defines the question sample and KILT defines the evidence population; the intervention counts in Table~\ref{tab:behavioral} are lower because they are conditional on an original cited statement and a constructible adversarial document.
 \color{black}
 
-The mechanistic sample came from the \href{https://huggingface.co/datasets/akariasai/PopQA}{\texttt{akariasai/PopQA}} test split \cite{mallen2023popqa}. We retained capital-city relations and selected 31 clean/corrupted pairs using the citation-logit filter described below. The counterfactual sample came from the \href{https://huggingface.co/datasets/Warrieryes/CB_qa}{\texttt{Warrieryes/CB\_qa}} training split associated with ConflictBank \cite{su2024conflictbank}. We streamed that split, retained the first 2,000 examples with the expected schema, and sorted them by example identifier before generation; therefore, the ConflictBank results contain 2,000 examples per model. ConflictBank was used only for secondary validation, PopQA only for mechanistic analysis, and probe labels and features came from our behavioral interventions rather than either dataset.
+The mechanistic sample came from the \href{https://huggingface.co/datasets/akariasai/PopQA}{\texttt{akariasai/PopQA}} test split \cite{mallen2023popqa}. We retained capital-city relations and selected 31 clean/corrupted pairs using the citation-logit filter described below. The counterfactual sample came from the \href{https://huggingface.co/datasets/Warrieryes/CB_qa}{\texttt{Warrieryes/CB\_qa}} training split associated with ConflictBank \cite{su2024conflictbank}. We streamed that split, retained the first 2,000 examples with the expected schema, and sorted them by example identifier before generation; therefore, the ConflictBank results contain 2,000 examples per model. ConflictBank was used only for an auxiliary knowledge-conflict analysis, PopQA only for a mechanistic diagnostic, and probe labels and features came from our behavioral interventions rather than either dataset.
 
 All model weights and tokenizers came from their official Hugging Face releases. We used three instruction-tuned checkpoints: \href{https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct}{\texttt{meta-llama/Llama-3.1-8B-Instruct}}, \href{https://huggingface.co/Qwen/Qwen2.5-7B-Instruct}{\texttt{Qwen/Qwen2.5-7B-Instruct}}, and \href{https://huggingface.co/google/gemma-3-12b-it}{\texttt{google/gemma-3-12b-it}}. These models were released by Meta, Alibaba's Qwen team, and Google DeepMind, respectively \cite{grattafiori2024llama3,yang2024qwen25,gemmateam2025gemma3}. Llama 3.1 and Gemma 3 require license acceptance. Qwen2.5 is distributed under the Apache 2.0 license. Because these are open-weight models, we can generate answers, extract hidden states, and run activation-patching experiments. For the semantic-similarity baseline, we used \href{https://huggingface.co/sentence-transformers/all-mpnet-base-v2}{\texttt{sentence-transformers/all-mpnet-base-v2}} to encode document-query pairs, following the sentence-transformer bi-encoder approach \cite{reimers2019sentencebert}.
 
@@ -143,7 +133,7 @@ Dataset/source & Sample or coverage & Experimental role \\
 Natural Questions \cite{kwiatkowski2019natural} & 1,444 unique questions & Main behavioral question sample \\
 KILT Wikipedia \cite{petroni2021kilt} & Full knowledge source; 100-token chunks and top-$5$ retrieval & Retrieved evidence for the behavioral benchmark \\
 PopQA \cite{mallen2023popqa} & 31 clean/corrupted capital-city pairs & Llama-only mechanistic activation patching \\
-ConflictBank \cite{su2024conflictbank} & 2,000 examples per model & Secondary validation of context--parametric knowledge conflict \\
+ConflictBank \cite{su2024conflictbank} & 2,000 examples per model & Auxiliary context--answer matching analysis \\
 \bottomrule
 \end{tabular}
 \caption{Summary of datasets and their roles in the citation-faithfulness experiments.}
@@ -156,7 +146,7 @@ ConflictBank \cite{su2024conflictbank} & 2,000 examples per model & Secondary va
 
 \subsection{Research Architecture}
 
-The study has two complementary experimental paths. The main pipeline starts with Natural Questions, KILT Wikipedia, and ConflictBank; it retrieves top-$5$ BM25 contexts from 100-token Wikipedia chunks, runs deterministic generation with the three open-weight instruction-tuned models, applies behavioral interventions, and evaluates post-rationalization with citation labels and hidden-state probes. A separate auxiliary path uses PopQA capital-city pairs for Llama-only activation patching, component selection, and generation-level validation. Figure~\ref{fig:research-architecture} summarizes this arrangement, which keeps the all-model behavioral comparison separate from the narrower Llama causal analysis.
+The primary path uses Natural Questions questions and top-$5$ BM25 retrieval from 100-token KILT Wikipedia chunks. It runs deterministic generation in three models, inserts answer phrases into selected documents, and measures recovered statements that cite the altered document. Hidden-state probes use labels from this path. Separate auxiliary paths use ConflictBank to examine context--answer matching and PopQA capital-city pairs for Llama-only activation patching. Figure~\ref{fig:research-architecture} summarizes these distinct roles.
 
 \begin{center}
 \centering
@@ -187,7 +177,7 @@ Here, $M_{\theta}$ is one of the instruction-tuned models. The generated answer 
 
 where $d_{ic_i} \models t_i$ means that the cited document supports the statement. This only checks the final text. It does not show whether the model used that document while producing the answer.
 
-To test faithfulness, we change the retrieved context and observe the model's response. For each target statement, we create an intervention $I_a$ that inserts an answer-bearing phrase into an adversarial document $d_{ia}$. The new retrieved context is
+To stress-test citation assignment, we change the retrieved context and observe the model's response. For each target statement, we create an intervention $I_a$ that inserts an answer-bearing phrase into an adversarial document $d_{ia}$. The new retrieved context is
 
 \begin{equation}
     C_i^{(a)} = I_a(C_i),
@@ -217,7 +207,7 @@ The post-rationalization label is therefore
     \ell_i^{(a)} = r_i^{(a)} z_i^{(a)}.
 \end{equation}
 
-A value of $\ell_i^{(a)}=1$ means that the model recovered the target statement and cited the adversarial document. This is the main behavioral signal used in the study.
+A value of $\ell_i^{(a)}=1$ means that the model recovered the target statement and cited the adversarial document. This operational event is the main behavioral outcome. It shows citation co-occurrence after insertion; it does not establish that the inserted document caused the answer or that the citation is unfaithful.
 
 \subsection{Models and Execution}
 
@@ -239,7 +229,7 @@ Each target statement was tested under three adversarial conditions:
     \item \textbf{Cited other}: the phrase is inserted into another document that the model cited elsewhere in the original answer.
 \end{itemize}
 
-An intervention is available when we can construct the adversarial document. We label the output as \textsc{post-rationalized} when two things happen: the model recovers the target statement, and the adversarial document's citation marker appears in the sentence with the recovered target phrase. The main metric is the adversarial citation rate, conditioned on statement recovery and condition availability:
+An intervention is available when we can construct the adversarial document. We label the output as \textsc{post-rationalized} when two things happen: the model recovers the target statement, and the adversarial document's citation marker appears in the sentence with the recovered target phrase. The main metric is the adversarial citation rate among available interventions that recover the target statement:
 
 \begin{equation}
     \mathrm{PRR} = \frac{\#\{\mathrm{recovered\ target\ and\ adversarial\ citation}\}}{\#\{\mathrm{condition\ available\ and\ recovered\ target}\}}.
@@ -249,12 +239,12 @@ Wilson 95\% intervals were computed for the conditional rate.
 
 \textcolor{blue}{The original supporting document remains in the relevant-uncited and cited-other contexts. The random condition replaces document [5]; therefore, it also replaces the original supporting document when that document occupied slot [5] (18 Llama cases, 37 Qwen cases, and 113 Gemma cases). This position and source-retention difference limits the random condition as a strict control.}
 
-As a concrete example, Qwen2.5-7B-Instruct was asked, ``When did Madras change its name to Chennai?'' In the original run, it answered ``Madras changed its name to Chennai in 1996 [5].'' For the relevant-uncited intervention, the phrase ``1996'' was appended to retrieved document [1], a relevant Madras Railway passage that was not the original cited source. The model then produced ``Madras changed its name to Chennai in 1996 [1].'' Because the target statement was recovered and the newly modified document was cited in the same sentence, this example receives the label \textsc{post-rationalized}. It illustrates the distinction between correctness and faithfulness: both documents can support the statement, but the intervention shows that the citation can shift toward a document after the answer phrase is placed in it. This single example does not establish the model's internal causal process; the benchmark measures the observable behavior systematically across many examples.
+As a concrete example, Qwen2.5-7B-Instruct was asked, ``When did Madras change its name to Chennai?'' In the original run, it answered ``Madras changed its name to Chennai in 1996 [5].'' For the relevant-uncited intervention, the phrase ``1996'' was appended to retrieved document [1], a relevant Madras Railway passage that was not the original cited source. The model then produced ``Madras changed its name to Chennai in 1996 [1].'' Because the target statement was recovered and the newly modified document was cited in the same sentence, this example receives the label \textsc{post-rationalized}. It illustrates an operational citation shift: both documents can support the statement, and the altered document was cited after the answer phrase was placed in it. This single example does not establish the model's internal causal process; the benchmark measures the observable behavior systematically across many examples.
 
-\subsection{ConflictBank Validation}
+\subsection{Auxiliary Knowledge-Conflict Analysis}
 \label{subsec:conflictbank-validation}
 
-We use ConflictBank as a secondary validation experiment, not as probe training data. ConflictBank examples contain a question, an original or parametric answer, a conflicting answer, and a piece of evidence that supports the conflicting answer. This lets us test what the model does when the retrieved context disagrees with what the model may already know.
+We use ConflictBank as an auxiliary context-sensitivity analysis, not as validation of citation provenance or as probe training data. ConflictBank examples contain a question, an original or parametric answer, a conflicting answer, and a piece of evidence that supports the conflicting answer. This lets us test what the model does when the retrieved context disagrees with what the model may already know.
 
 For each example $j$, let $q_j$ be the question, $a_j^{p}$ be the original or parametric answer, $a_j^{c}$ be the conflicting answer, and $e_j^{c}$ be the conflicting evidence. Each model is run twice. First, it answers the question without any supporting document:
 
@@ -279,19 +269,19 @@ The generated answer is then assigned to one of three classes. After text normal
     \end{cases}
 \end{equation}
 
-We apply this classifier to both $y_j^{0}$ and $y_j^{c}$. The main validation signal is the rate at which the with-context answer is labeled \textsc{Context Match}:
+We apply this classifier to both $y_j^{0}$ and $y_j^{c}$. The descriptive signal is the rate at which the with-context answer is labeled \textsc{Context Match}:
 
 \begin{equation}
     \mathrm{CMR}=\frac{1}{n}\sum_{j=1}^{n}\mathbb{1}\{g(y_j^{c})=\textsc{Context\ Match}\}.
 \end{equation}
 
-In this study, $n=2000$ for each model. A high context-match rate means that the model is strongly influenced by the supplied context when that context conflicts with stored knowledge. The resulting class counts are converted to percentages for the context-shift figure in Section~\ref{sec:results}.
+In this study, $n=2000$ for each model. A high context-match rate shows that the output often contains the supplied answer under this matcher; without a recognizable closed-book answer, it does not measure a shift away from stored knowledge. The resulting class counts are converted to percentages for the context-shift figure in Section~\ref{sec:results}.
 
 \textcolor{blue}{Because the no-context answers are dominated by the \textsc{Ambiguous} class, the unconditional context-match rate cannot by itself quantify a shift \emph{away from parametric knowledge}: for most examples we have no evidence that the model knew the fact in the first place. We therefore report two additional measures that condition on demonstrated knowledge and connect the conflict to the citation. First, restricting to examples the model answered correctly without context ($g(y_j^{0})=\textsc{Parametric\ Match}$), the conditional override rate is}
 \begin{equation}
     \mathrm{CMR}\mid_{\mathrm{known}}=\frac{\#\{g(y_j^{c})=\textsc{Context\ Match}\ \text{and}\ g(y_j^{0})=\textsc{Parametric\ Match}\}}{\#\{g(y_j^{0})=\textsc{Parametric\ Match}\}}.
 \end{equation}
-\textcolor{blue}{Second, among with-context answers labeled \textsc{Context Match}, we record whether the answer cites the supplied conflicting document $[1]$, giving a context-citation rate that links context reliance to the emitted citation. The plain substring matcher used for classification is replaced by a content-token matcher that treats a candidate answer as present when its stopword-filtered tokens appear as a contiguous run in the normalized output, so that verbose parametric answers are not spuriously labeled ambiguous. Both measures are recomputed from the saved generations without additional inference.}
+\textcolor{blue}{Second, among with-context answers labeled \textsc{Context Match}, we record whether the answer cites the supplied conflicting document $[1]$, giving a context-citation co-occurrence rate. Because the prompt requests citation of supplied evidence, this rate cannot determine which source caused the claim. The plain substring matcher used for classification is replaced by a content-token matcher that treats a candidate answer as present when its stopword-filtered tokens appear as a contiguous run in the normalized output, so that verbose parametric answers are not spuriously labeled ambiguous. Both measures are recomputed from the saved generations without additional inference.}
 
 \subsection{Mechanistic Activation Patching}
 
@@ -313,7 +303,7 @@ We marked components as positive if their mean denoising recovery was at least 0
 
 \subsection{Linear Faithfulness Probes}
 
-For each model, we extracted hidden-state features from behavioral intervention examples labeled \textsc{post-rationalized} or \textsc{not-post-rationalized}. \textcolor{blue}{To prevent the feature location from depending on the label, we anchored every example at the same structural position: the final token of the target phrase, which is the point at which the model must decide whether to attach a citation. This anchor is chosen identically for both classes and precedes any citation marker, so the probe cannot exploit position or output cues tied to the citation outcome.} For each layer, the feature vector was the mean hidden state over the anchor token and the two answer tokens before it.
+For each model, we extracted hidden-state features from behavioral intervention examples labeled \textsc{post-rationalized} or \textsc{not-post-rationalized}. \textcolor{blue}{To prevent the feature location from depending on the label, we anchored every example at the same structural position: the final token of the target phrase, which is the point at which the model must decide whether to attach a citation. This anchor is chosen identically for both classes and precedes any citation marker, removing the identified label-dependent anchor. Other output, lexical, or condition cues may still remain in the features.} For each layer, the feature vector was the mean hidden state over the anchor token and the two answer tokens before it.
 
 For layer $\lambda$ and example $i$, let $h_{i,\lambda,t}$ be the hidden state at answer-token position $t$. If $T_i$ is the anchor token position, the probe feature is
 
@@ -340,48 +330,48 @@ We split questions by \texttt{question\_id} into 70\% training, 15\% validation,
 \section{Experimental Results}
 \label{sec:results}
 
-\subsection{Behavioral Post-Rationalization}
+\subsection{Behavioral Citation Shifts}
 
-The behavioral benchmark compares three types of forged documents: random documents, relevant documents that were not originally cited, and documents cited elsewhere in the original answer. Random forged documents are rarely cited, whereas rates are higher for relevant-uncited and cited-other documents, suggesting that models are more likely to cite forged evidence when it looks topically relevant or already fits the citation context. Table~\ref{tab:behavioral} reports the conditional post-rationalization rates.
+The behavioral benchmark compares three types of forged documents: random documents, relevant documents that were not originally cited, and documents cited elsewhere in the original answer. The observed conditional rates are lowest in the random condition and higher in the relevant-uncited and cited-other conditions. Table~\ref{tab:behavioral} reports the eligible and recovered denominators. These are descriptive comparisons because document position, source retention, and eligibility differ by condition.
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{llrrrr}
+\begin{tabular}{llrrrrr}
 \toprule
-Model & Condition & Post-rationalized & Available & Rate & Wilson 95\% CI \\
+Model & Condition & Events & Available & Recovered & Rate & Wilson 95\% CI \\
 \midrule
-Llama-3.1-8B & Random & 0 & 274 & 0.0\% & [0.0, 1.7] \\
-Llama-3.1-8B & Relevant uncited & 8 & 245 & 3.5\% & [1.8, 6.7] \\
-Llama-3.1-8B & Cited other & 2 & 23 & 9.1\% & [2.5, 27.8] \\
+Llama-3.1-8B & Random & 0 & 274 & 226 & 0.0\% & [0.0, 1.7] \\
+Llama-3.1-8B & Relevant uncited & 8 & 245 & 231 & 3.5\% & [1.8, 6.7] \\
+Llama-3.1-8B & Cited other & 2 & 23 & 22 & 9.1\% & [2.5, 27.8] \\
 \midrule
-Qwen2.5-7B & Random & 3 & 326 & 1.1\% & [0.4, 3.2] \\
-Qwen2.5-7B & Relevant uncited & 27 & 299 & 9.7\% & [6.7, 13.7] \\
-Qwen2.5-7B & Cited other & 11 & 59 & 21.6\% & [12.5, 34.6] \\
+Qwen2.5-7B & Random & 3 & 326 & 274 & 1.1\% & [0.4, 3.2] \\
+Qwen2.5-7B & Relevant uncited & 27 & 299 & 279 & 9.7\% & [6.7, 13.7] \\
+Qwen2.5-7B & Cited other & 11 & 59 & 51 & 21.6\% & [12.5, 34.6] \\
 \midrule
-Gemma-3-12B & Random & 4 & 829 & 0.6\% & [0.2, 1.5] \\
-Gemma-3-12B & Relevant uncited & 13 & 726 & 1.9\% & [1.1, 3.2] \\
-Gemma-3-12B & Cited other & 18 & 117 & 17.8\% & [11.6, 26.4] \\
+Gemma-3-12B & Random & 4 & 829 & 682 & 0.6\% & [0.2, 1.5] \\
+Gemma-3-12B & Relevant uncited & 13 & 726 & 681 & 1.9\% & [1.1, 3.2] \\
+Gemma-3-12B & Cited other & 18 & 117 & 101 & 17.8\% & [11.6, 26.4] \\
 \bottomrule
 \end{tabular}
-\caption{Behavioral post-rationalization rates conditional on condition availability and target statement recovery.}
+\caption{Operational adversarial-citation events. Available counts are constructible interventions; recovered counts are the denominators for rates and Wilson intervals.}
 \label{tab:behavioral}
 \end{table}
 
 \textcolor{blue}{The rates are conditional on different funnels rather than a common denominator. The original-answer files contain 1,444 generations per model; parseable cited answers numbered 629 for Llama, 916 for Qwen, and 1,106 for Gemma. Target extraction then yielded 274, 326, and 829 question-level intervention sets, respectively. Available cited-other cases were only 23, 59, and 117, so the cited-other percentages should not be treated as a definitive cross-model ranking.}
 
-\subsection{ConflictBank}
+\subsection{Auxiliary Knowledge-Conflict Analysis}
 
 The ConflictBank experiment compares each model's answer without supporting context with its answer after conflicting evidence is supplied. Each model therefore has two bars in Figure~\ref{fig:conflictbank-shift}, with stacked colors showing whether the answer matches the model's parametric answer, matches the supplied context, or remains ambiguous under the string-matching rule. We use this figure instead of a separate table because the main result is the change between the two settings. Without context, most outputs are ambiguous because the short matching rule often finds neither answer directly; with conflicting evidence, all three models shift toward the context-matching class. \textcolor{blue}{This is evidence of context sensitivity under the classifier, not a clean before--after measure of overriding parametric knowledge: the no-context condition was ambiguous for 1,994 Llama, 1,942 Qwen, and 1,916 Gemma examples. We therefore interpret the figure as a context-conditioned answer-class analysis rather than a definitive measure of knowledge conflict resolution.}
 
 \begin{center}
 \centering
 \includegraphics[width=\linewidth,height=0.28\textheight,keepaspectratio]{conflictbank_context_shift.pdf}
-\captionof{figure}{ConflictBank answer classes before and after conflicting evidence is supplied. The figure shows that all three models shift strongly toward the context-supported answer when conflict evidence is included.}
+\captionof{figure}{ConflictBank answer classes before and after conflicting evidence is supplied. The figure shows answer classes under the content-token matcher; most closed-book outputs are ambiguous, so the bars do not quantify a general shift from parametric knowledge.}
 \label{fig:conflictbank-shift}
 \end{center}
 
-\textcolor{blue}{Table~\ref{tab:conflictbank-conditional} reports the two knowledge-conditioned measures. Restricting to the examples that each model answered correctly without context isolates a small but interpretable subset (56 Qwen, 71 Gemma, and 5 Llama). Within this subset, the supplied conflicting evidence overrides the model's own prior answer in 78.6\% of Qwen, 67.6\% of Gemma, and 80.0\% of Llama cases, so the shift is measured only where a parametric answer was actually demonstrated. The Llama subset is too small to support a precise estimate and is reported for completeness. More directly relevant to citation faithfulness, when a with-context answer adopts the conflicting answer it also cites the conflicting document in 94.6\%, 98.6\%, and 96.4\% of cases; context reliance and citation therefore move together, which links this experiment to the paper's central question rather than measuring answer matching alone.}
+\textcolor{blue}{Table~\ref{tab:conflictbank-conditional} reports the two knowledge-conditioned measures. Restricting to the examples that each model answered correctly without context isolates a small but interpretable subset (56 Qwen, 71 Gemma, and 5 Llama). Within this subset, the supplied conflicting evidence overrides the model's own prior answer in 78.6\% of Qwen, 67.6\% of Gemma, and 80.0\% of Llama cases, so the shift is measured only where a parametric answer was actually demonstrated. The Llama subset is too small to support a precise estimate and is reported for completeness. Among with-context answers matching the supplied answer, the conflicting document was cited in 94.6\%, 98.6\%, and 96.4\% of Qwen, Gemma, and Llama cases. This is answer--citation co-occurrence under an instruction to cite supplied evidence, not a test of whether that document caused the generated claim.}
 
 \begin{table}[t]
 \centering
@@ -400,13 +390,13 @@ Gemma-3-12B & 71 & 67.6\% [56.1, 77.3] & 98.6\% \\
 \label{tab:conflictbank-conditional}
 \end{table}
 
-\subsection{Mechanistic Patching and Interventions}
+\subsection{Activation-Patching Diagnostic}
 
 The PopQA mechanistic phase selected 31 clean/corrupted pairs that met the filtering rule. Patching produced 512 residual entries, 512 MLP entries, and 1,024 attention-head entries. Component selection found no positive citation heads or MLP components under the denoising threshold. It found one necessary attention head, layer 0 head 3, and 11 necessary MLP positions in layer 0. \textcolor{blue}{The full result is therefore better described as failed localization above the prespecified threshold than as identification of a citation mechanism. The citation-logit difference was measured at the final prompt position before generation, and the patching tables covered token positions 102--117.}
 
-\textcolor{blue}{To quantify the null rather than merely report an absence, we bootstrapped the mean denoising recovery of the single best-scoring component of each type over the 31 examples. No individual attention head or MLP write reached the 0.10 selection threshold on average: the best head recovered $0.025$ (95\% CI $[0.004, 0.049]$) and the best MLP position recovered $0.070$ (95\% CI $[0.023, 0.127]$). Residual-stream patches at early layers did reach the threshold, with a best recovery of $0.163$ (95\% CI $[0.067, 0.253]$) and four residual positions above $0.10$ on average. The citation effect is thus present in the residual stream but is not attributable to sparse individual heads or MLP writes at this threshold; the mechanism, to the extent it exists in this small setting, is distributed rather than localized.}
+\textcolor{blue}{To quantify the null rather than merely report an absence, we bootstrapped the mean denoising recovery of the single best-scoring component of each type over the 31 examples. No individual attention head or MLP write reached the 0.10 selection threshold on average: the best head recovered $0.025$ (95\% CI $[0.004, 0.049]$) and the best MLP position recovered $0.070$ (95\% CI $[0.023, 0.127]$). Residual-stream patches at early layers did reach the threshold, with a best recovery of $0.163$ (95\% CI $[0.067, 0.253]$) and four residual positions above $0.10$ on average. The residual patches affect the selected next-token logit contrast, but no individual head or MLP write meets the prespecified positive threshold. These data do not identify a causal circuit or establish that the observed residual effect controls citations in full answers.}
 
-Validation found 7 missed-citation examples and 58 spurious-citation examples. We define correction success rate as the percentage of validation examples whose citation behavior is fixed after component scaling. For missed-citation examples, success means that the intervention adds the expected citation while preserving the answer. For spurious-citation examples, success means that the intervention removes the unwanted citation while preserving the answer. \textcolor{blue}{Neither group had a successful correction: 0/7 missed-citation cases and 0/58 spurious-citation cases. Because no positive components passed the selection threshold, this result does not establish that a validated citation mechanism was resistant to scaling.}
+Validation found 7 missed-citation examples and 58 spurious-citation examples. We define correction success rate as the percentage of validation examples whose citation behavior is fixed after component scaling. For missed-citation examples, success means that the intervention adds the expected citation while preserving the answer. For spurious-citation examples, success means that the intervention removes the unwanted citation while preserving the answer. \textcolor{blue}{Neither group had a successful correction: 0/7 missed-citation cases and 0/58 spurious-citation cases. Because no individual head or MLP write reached the selection threshold on average, this result does not test whether scaling the residual-stream signal could control generation.}
 
 \begin{table}[t]
 \centering
@@ -423,71 +413,77 @@ Spurious citation & 58 & 0.0\% \\
 \label{tab:mechanistic-validation}
 \end{table}
 
-\subsection{Faithfulness Probes}
+\subsection{Hidden-State Probe Diagnostic}
 
-The probe datasets contained 15,328 Llama feature rows, 16,912 Qwen feature rows, and 70,272 Gemma feature rows. Table~\ref{tab:probes} reports test performance for the selected layer of each model. The selected layers fall around 60--68\% relative depth. This suggests that the faithfulness signal is easiest to decode in middle-to-late residual streams. \textcolor{blue}{These row counts include all extracted layers and are not independent examples. At the selected layer, the test sets contained 71 Llama rows with 1 positive label, 100 Qwen rows with 2 positives, and 226 Gemma rows with 4 positives; the corresponding train/validation positive counts were 7/2, 32/7, and 28/3. The probe results should therefore be read as small, question-level evaluations rather than large independent samples.}
+The probe datasets contained 15,328 Llama feature rows, 16,912 Qwen feature rows, and 70,272 Gemma feature rows across all extracted layers. These are not independent examples. At the selected layer, the question-level test sets contained 71 Llama rows with 1 positive label, 100 Qwen rows with 2 positives, and 226 Gemma rows with 4 positives; the corresponding train/validation positive counts were 7/2, 32/7, and 28/3. Table~\ref{tab:probes} reports performance after re-extracting every model's features at the label-independent target-phrase anchor. Validation selected an early layer for Llama, a later layer for Qwen, and an intermediate layer for Gemma; there is no consistent depth at which the probe succeeds.
 
 \begin{table}[t]
 \centering
 \small
 \begin{tabular}{lrrrrrr}
 \toprule
-Model & Layer & Rel. depth & AUROC & AUPRC & Bal. acc. & Highest baseline AUROC \\
+Model & Layer & Rel. depth & AUROC & AUPRC & Bal. acc. & Best baseline AUROC \\
 \midrule
-Llama-3.1-8B & 21 & 0.68 & 0.943 & 0.200 & 0.479 & 0.757 \\
-\midrule
-Qwen2.5-7B & 17 & 0.63 & 0.969 & 0.325 & 0.918 & 0.908 \\
-\midrule
-Gemma-3-12B & 28 & 0.60 & 0.831 & 0.357 & 0.616 & 0.716 \\
+Llama-3.1-8B & 2 & 0.06 & 0.243 & 0.019 & 0.471 & 0.757 \\
+Qwen2.5-7B & 19 & 0.70 & 0.531 & 0.074 & 0.679 & 0.765 \\
+Gemma-3-12B & 18 & 0.38 & 0.328 & 0.053 & 0.600 & 0.716 \\
 \bottomrule
 \end{tabular}
-\caption{Test performance of selected-layer linear probes. Highest baseline AUROC is the highest score among lexical overlap, citation-logit margin, and document-query cosine similarity.}
+\caption{Question-level test performance of selected-layer probes using the label-independent feature anchor. Best baseline AUROC is the highest of lexical overlap, citation-logit margin, and document-query cosine similarity on the same test split.}
 \label{tab:probes}
 \end{table}
 
-The probes have higher AUROC than the best listed baseline for all three models. Qwen has the highest balanced accuracy among the three models. Llama has high AUROC but lower balanced accuracy at the default 0.5 threshold, mainly because it has very few positive test examples. Gemma has lower AUROC than Llama and Qwen, while its AUPRC is higher than the other two models under the observed label imbalance. \textcolor{blue}{To quantify uncertainty, we resampled complete question groups 1,000 times and computed percentile 95\% intervals. The resulting AUROC intervals were [0.877, 0.973] for Llama, [0.928, 1.000] for Qwen, and [0.613, 1.000] for Gemma; the corresponding AUPRC intervals were [0.125, 0.500], [0.143, 1.000], and [0.016, 1.000]. Behavioral rates use Wilson 95\% intervals.}
+None of the probes exceeded its strongest baseline by AUROC. The point estimates are unstable because the test sets contain only one, two, and four positive examples. In 1,000 question-group bootstrap resamples, the AUROC 95\% intervals were [0.147, 0.380] for Llama, [0.081, 0.961] for Qwen, and [0.073, 0.872] for Gemma; the AUPRC intervals were [0.016, 0.071], [0.011, 0.401], and [0.005, 0.319], respectively. These results do not support reliable screening of post-rationalization from the tested hidden-state features.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llrrr}
+\toprule
+Model & Held-out condition & Positives / rows & AUROC & AUPRC \\
+\midrule
+Llama-3.1-8B & Cited other & 1 / 3 & 1.000 & 1.000 \\
+ & Random & 0 / 34 & -- & -- \\
+ & Relevant uncited & 0 / 34 & -- & -- \\
+Qwen2.5-7B & Cited other & 0 / 4 & -- & -- \\
+ & Random & 0 / 47 & -- & -- \\
+ & Relevant uncited & 2 / 49 & 0.596 & 0.152 \\
+Gemma-3-12B & Cited other & 2 / 15 & 0.500 & 0.183 \\
+ & Random & 1 / 108 & 0.439 & 0.016 \\
+ & Relevant uncited & 1 / 103 & 0.833 & 0.056 \\
+\bottomrule
+\end{tabular}
+\caption{Leave-one-condition-out probe transfer at each model's selected layer. A dash means that the held-out set had no positive examples, so AUROC and AUPRC are undefined.}
+\label{tab:probe-transfer}
+\end{table}
+
+Table~\ref{tab:probe-transfer} reports condition transfer. Several held-out conditions contained no positive labels, making discrimination metrics undefined. The defined estimates rely on one or two positives per condition and vary substantially. Transfer therefore does not establish a condition-general faithfulness signal in these data.
 
 \section{Discussion}
 \label{sec:discussion}
 
-The behavioral results show that citation faithfulness is not simply present or absent. Although the models do not blindly cite arbitrary forged documents, they are more likely to cite adversarial documents when those documents are topically relevant or already plausible in the citation context, suggesting that citation selection can respond to document-answer compatibility even when the document is not the true source of the answer.
+The primary finding is a set of operational citation shifts under answer-phrase insertion. Among recovered statements, altered random documents were cited at 0--1.1\%, whereas the relevant-uncited and cited-other conditions had higher observed rates. This pattern is compatible with citation assignment responding to document-answer fit or prior citation context. It is not a causal estimate of those factors: the random condition fixes the altered document at slot [5] and sometimes replaces the original source, while the other conditions retain that source and have different eligibility rules. The event label does not reveal whether the inserted document, the original source, or stored knowledge produced the answer.
 
-\textcolor{blue}{The ConflictBank results point in the same direction from another angle, but only once the comparison is restricted to cases with demonstrated parametric knowledge: among examples each model answered correctly without context, supplied conflicting evidence overrides that answer in roughly two-thirds to four-fifths of cases, and the great majority of those overridden answers cite the conflicting document. This sensitivity is useful when the context is correct, but it also means that document placement and surface evidence can strongly steer both the answer and its citation. Unconditional context-match rates over the full sample are not informative here, because most no-context answers do not contain either candidate string; the conditional and citation-linked measures are what connect this experiment to citation faithfulness rather than to answer matching in general.}
-
-\textcolor{blue}{The mechanistic results are best described as distributed rather than simply absent. No single attention head or MLP write reached the pre-registered denoising threshold, and the bootstrap confidence intervals for the best-scoring head and MLP position stayed below it, so sparse localization at this threshold is not supported. The residual stream, in contrast, did carry a detectable citation-relevant effect at several early positions. This pattern suggests that citation decisions in this small setting are carried collectively across the residual stream rather than by an isolated component, which is consistent with the subsequent finding that scaling the selected head and MLP components did not control generation: an intervention aimed at a sparse subset is unlikely to control a signal that is not sparsely represented in the first place.}
-
-The probe results are practically useful because, even with simple logistic regression, hidden states contain a signal that predicts post-rationalization. Although this does not prove that the probed feature causes unfaithful citation behavior, it suggests that faithfulness risk could be monitored without rerunning the full adversarial intervention for every generation.
+The auxiliary results set bounds on stronger claims. Most ConflictBank closed-book answers were ambiguous under the answer matcher, so the full-sample with-context match rate does not measure general override of known facts. The demonstrated-knowledge subsets are small, especially for Llama (5 examples). A context-matching answer often cites the supplied document, but the prompt instructs the model to cite it; this co-occurrence is not a provenance test. In the mechanistic diagnostic, residual-stream patches changed a selected next-token citation logit contrast, but no individual head or MLP write reached the prespecified positive threshold. Scaling selected components corrected none of 7 missed-citation or 58 spurious-citation cases. The corrected probes scored below the strongest simple baseline for every model, with only 1, 2, and 4 positives in their respective test sets. Neither diagnostic supports a deployable monitor or a validated citation mechanism.
 
 \subsection{Theoretical and Practical Implications}
 \label{sec:implications}
 
-\color{blue}
-Theoretically, the findings refine attribution in RAG by separating three levels of evidence. First, citation correctness is a textual support relation between a claim and a document. Second, behavioral faithfulness is tested by changing the document's evidential role and observing whether the model changes its answer or citation. Third, mechanistic faithfulness would require identifying internal states whose intervention reliably changes generation. The observed post-rationalization rates establish that correctness and behavioral faithfulness can diverge. The probe results further show that this divergence is represented in hidden states, while the failed scaling intervention cautions against interpreting decodability as causal control. This distinction extends recent attribution and knowledge-conflict research by placing support, sensitivity, prediction, and intervention on separate evidential levels.
+The distinction between textual support and causal provenance remains important for RAG evaluation. This study contributes an explicit, reproducible behavioral endpoint with separate counts for constructible interventions, recovered statements, and citation events. The endpoint is useful as a stress test: it finds citations assigned to altered answer-bearing documents and identifies cases for closer investigation. It should not be interpreted as a measured prevalence of unfaithful citations or an isolated effect of document relevance.
 
-Practically, RAG evaluations should report citation correctness together with intervention-based faithfulness tests. Systems should not treat a relevant cited document as proof that the document caused the answer. The results also motivate a two-stage monitoring design: use calibrated hidden-state probes as a low-cost screening signal, then apply document-level verification or controlled re-generation to flagged cases. The low availability of the cited-other condition and the imbalance in probe labels show that deployment thresholds must be calibrated on an independent sample. Finally, citation interfaces should distinguish ``supports the claim'' from ``was used to generate the claim'' unless the latter has been directly tested.
-\color{black}
-
-\color{blue}
-Across the four experiments, a single methodological point recurs: an unconditional summary of model behavior under intervention is frequently uninformative or misleading, and each experiment therefore required a conditioning or robustness step before it could speak to faithfulness rather than to a surface artifact of the evaluation. The behavioral benchmark conditions post-rationalization on statement recovery and intervention availability rather than reporting a raw citation rate. The ConflictBank validation conditions the context-override rate on demonstrated parametric knowledge and links it to the emitted citation, rather than reporting an unconditional answer-matching rate over a sample that is mostly ambiguous. The probe anchors its feature position identically for both classes and is evaluated under leave-one-condition-out transfer, rather than reporting in-distribution accuracy from a label-dependent position. The mechanistic analysis reports a bootstrapped effect size at the level of the representation that carries the signal (the residual stream), rather than treating a sparse-component null result as evidence that no citation-relevant computation exists. This shared discipline, applied consistently across behavior, conflict sensitivity, causal structure, and representation, is what connects the four experiments: each answers a different question about evidence use, but each was made accountable to the same conditioning standard before its result was reported.
-\color{black}
+For practical evaluation, claim--source support checks can be paired with controlled regeneration and source ablation. A stronger attribution study would randomize document positions, include no-insertion and placebo arms, retain the original source consistently, manually audit labels, and test whether removing a cited source changes the claim while alternative sources are controlled. Larger, independently labeled positive sets are also needed before a hidden-state screening claim can be revisited.
 
 \section{Limitations}
 \label{sec:limitations}
 
-This study uses one specific definition of citation faithfulness. It detects post-rationalization under answer-string insertion interventions. It does not cover every possible kind of unfaithful attribution. The Natural Questions setup depends on BM25 retrieval over KILT Wikipedia chunks and on parser rules for cited statements. The cited-other condition has low availability for Llama, so its confidence interval is wide. The mechanistic experiment is also narrow: it uses only Llama, only PopQA capital facts, and a citation-token-versus-period logit difference as the target. The probe labels are imbalanced, especially for Llama and Gemma, so ranking metrics should be interpreted alongside threshold-dependent metrics. Finally, the local run used Apple MPS rather than CUDA, so exact numerical results may differ from the original CUDA-oriented setup.
+This study uses an operational citation event under answer-string insertion. The event does not directly establish unfaithful provenance and does not cover every kind of attribution failure. The Natural Questions setup depends on BM25 retrieval over KILT Wikipedia chunks and on parser rules for cited statements. The cited-other condition has low availability for Llama, so its confidence interval is wide. The mechanistic experiment is also narrow: it uses only Llama, only PopQA capital facts, and a citation-token-versus-period logit difference as the target. The probe labels are highly imbalanced: the selected-layer test sets contain only 1, 2, and 4 positives for Llama, Qwen, and Gemma. Several condition-transfer test sets have no positive examples, and the corrected probes do not exceed the strongest baseline by AUROC. Finally, the local run used Apple MPS rather than CUDA, so exact numerical results may differ from the original CUDA-oriented setup.
 
-\textcolor{blue}{The behavioral design did not include no-insertion or placebo-insertion arms, nor did it randomize document position; random forged documents were fixed at slot [5]. The reported rates therefore measure behavior under answer-string insertion and should not be interpreted as an isolated insertion effect. We also did not manually audit approximately 100 labels per model, so substring and sentence parsing errors remain possible; leave-one-condition-out probe transfer mitigates but does not eliminate the risk that some of the signal is intervention-specific, since only three conditions are available to hold out. The ConflictBank parametric-known subsets are small, especially for Llama (5 examples), so the corresponding override-rate interval is wide and should be read as indicative rather than precise. Finally, Gemma-3-12B is larger than the two other models, and the mechanistic sample is limited to one model and one relation type.}
+\textcolor{blue}{The behavioral design did not include no-insertion or placebo-insertion arms, nor did it randomize document position; random forged documents were fixed at slot [5]. The reported rates therefore measure behavior under answer-string insertion and should not be interpreted as an isolated insertion effect. We also did not manually audit approximately 100 labels per model, so substring and sentence parsing errors remain possible; leave-one-condition-out probe transfer remains inconclusive because held-out conditions have zero to two positives, so condition-general prediction has not been demonstrated. The ConflictBank parametric-known subsets are small, especially for Llama (5 examples), so the corresponding override-rate interval is wide and should be read as indicative rather than precise. Finally, Gemma-3-12B is larger than the two other models, and the mechanistic sample is limited to one model and one relation type.}
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-\color{blue}
-This study investigated citation faithfulness in open-weight retrieval-augmented generation by distinguishing textual support from actual evidence use. A citation is correct when its document supports the generated claim, but it is faithful only when it reflects the evidence that influenced generation. We examined this distinction across multiple instruction-tuned model families through behavioral document interventions, knowledge-conflict evaluation, mechanistic activation patching, and hidden-state probing. The behavioral experiments showed that models rarely cited random forged documents, but cited them more often when they appeared relevant or plausible. The knowledge-conflict evaluation further showed that retrieved context can influence outputs when it disagrees with stored knowledge. Together, these findings indicate that models can rely on supplied evidence while also attaching plausible citations that do not necessarily identify the source responsible for a claim. Document-answer compatibility, contextual influence, and faithful provenance are therefore related but distinct properties.
-\color{black}
-
-The internal analyses clarified both what can be detected and what can be controlled. \textcolor{blue}{Activation patching found no single attention head or MLP write whose bootstrapped denoising recovery reliably reached the pre-registered threshold, but it did find a citation-relevant effect distributed across several early residual-stream positions.} However, scaling the selected head and MLP components during full generation did not add missing citations or remove unwanted citations while preserving the answer. This means that changing a next-token citation score at a sparse set of components was not sufficient to control citation behavior across a complete generated response\textcolor{blue}{, which is consistent with the effect being carried collectively rather than by an isolated mechanism}. Linear probes distinguished post-rationalized from non-post-rationalized outputs more effectively than the listed surface-level baselines by AUROC, indicating that hidden states contain information associated with citation-faithfulness risk; however, this establishes predictability rather than causality and would require calibration before deployment. \textcolor{blue}{Because the probe feature is anchored identically regardless of the citation outcome and is evaluated under leave-one-condition-out transfer, this predictability reflects more than a position or output cue tied to the label, though the small number of positive test examples still limits how precisely the effect size can be estimated.} Taken together, the experiments indicate that citation faithfulness cannot be represented by a single metric: support-based evaluation checks whether citations justify claims, controlled interventions test evidence reliance, conflict tests characterize sensitivity to context, mechanistic methods examine causal structure, and probes assess whether risk is internally detectable. RAG systems should therefore connect claims not only to documents that support them but also, where possible, to evidence that influenced their generation.
-
-Future work should test whether these findings generalize across retrieval methods, knowledge domains, model sizes, model families, and citation formats. Mechanistic studies should use more precise, position-aware interventions that target the selected activations without changing unrelated parts of the answer, and should evaluate whether effects remain stable across prompts and longer generations. Probe-based monitoring should be tested on independent datasets, calibrated under realistic class imbalance, and evaluated at decision thresholds suited to deployment rather than only by ranking metrics. Combining stronger causal tests with calibrated monitoring could support systems that detect unfaithful citations during generation and correct them without changing the factual content of the answer.
+This paper stress-tested citation attribution in three open-weight RAG models by inserting an answer phrase into different retrieved documents. Altered documents were sometimes cited with a recovered statement, especially in the cited-other condition, but the rates are conditional on distinct eligibility and recovery funnels. The experiment measures observable citation assignment, not the causal provenance of an answer. ConflictBank answer matching, activation patching, and hidden-state probing did not supply independent validation of faithful or unfaithful source use; the latter two yielded negative generation-level and predictive results. The evidence supports a descriptive cross-model stress test and a clear evaluation boundary: citations that support a claim, citations that move under document interventions, and citations that identify the source responsible for a claim are different evidential claims. Future work needs matched document-position controls, placebo and ablation arms, manual label validation, and independent test sets before drawing stronger causal or deployment conclusions.
 
 \color{black}
 \bibliographystyle{cas-model2-names}

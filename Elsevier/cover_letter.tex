@@ -9,16 +9,16 @@
 \begin{document}
 
 \begin{flushright}
-11 September 2026
+29 September 2026
 \end{flushright}
 
 Dear Editor,
 
-Please consider our manuscript, ``Citation Faithfulness in Open-Weight Retrieval-Augmented Generation,'' for publication in your journal.
+Please consider our manuscript, ``Stress-Testing Citation Faithfulness in Open-Weight Retrieval-Augmented Generation,'' for publication in your journal.
 
-The manuscript studies whether generated citations reflect the evidence that influenced an answer, rather than only whether the cited text supports the final claim. We evaluate this question through controlled post-rationalization interventions on Natural Questions and KILT Wikipedia, a ConflictBank validation experiment, a focused activation-patching study on PopQA, and linear probes of hidden states across three open-weight instruction-tuned models.
+The manuscript examines how citation assignment changes when an answer phrase is inserted into retrieved documents. Extending prior citation-intervention work, we compare random, relevant-uncited, and cited-other document conditions across three open-weight instruction-tuned models on Natural Questions with KILT Wikipedia retrieval. We report both intervention availability and statement recovery, so the conditional rates can be assessed directly.
 
-The results provide a measured account of citation faithfulness. Forged documents are cited more often when they are relevant or already plausible in the citation context. Supplied context also changes model answers in knowledge-conflict cases. The mechanistic intervention did not control citation behavior during full generation, while hidden-state probes provided a predictive signal associated with the behavioral label. We report these positive and negative findings together and distinguish prediction from causal evidence throughout the manuscript.
+The main result is an observable citation shift toward some altered answer-bearing documents. We describe it as a stress-test outcome, since document position and retention of the original source differ across conditions; it cannot establish which source caused an answer. Auxiliary ConflictBank, activation-patching, and probe analyses clarify these limits. In particular, selected component scaling corrected no generation-level citation errors, and corrected hidden-state probes did not outperform simple baselines. The paper thus offers a transparent behavioral evaluation with explicit limits on causal and deployment claims.
 
 This work is original, has not been published previously, and is not under consideration elsewhere. All authors have reviewed and approved the manuscript and agree with its submission. The authors declare no competing interests.
 

@@ -8,11 +8,11 @@
 \section*{Highlights}
 
 \begin{itemize}
-    \item A cross-model intervention benchmark separates citation correctness from citation faithfulness in open-weight retrieval-augmented generation systems.
-    \item Cited-other interventions expose post-rationalization rates of 21.6\% for Qwen, 17.8\% for Gemma, and 9.1\% for Llama.
-    \item ConflictBank shows that supplied evidence shifts model answers even when it conflicts with knowledge stored in the model.
-    \item Hidden-state probes outperform lexical, citation-logit, and semantic baselines, reaching test AUROC values between 0.831 and 0.969.
-    \item Activation patching finds internal model components linked to citation scores, but scaling them does not fix citation errors during full generation.
+    \item We stress-test citation assignment under answer-phrase insertion in three open-weight RAG models.
+    \item Cited-other documents receive 9.1\%, 21.6\%, and 17.8\% of recovered-statement citations in Llama, Qwen, and Gemma.
+    \item Document position and source retention differ across conditions, limiting causal comparisons.
+    \item ConflictBank answer--citation co-occurrence does not identify the source that caused a claim.
+    \item Corrected probes trail simple baselines; component scaling corrects no generation-level citation errors.
 \end{itemize}
 
 \end{document}

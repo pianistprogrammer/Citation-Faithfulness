@@ -8,10 +8,10 @@ response before resubmission to another IS-tier journal.
 
 | # | Concern | Fix | Status |
 |---|---------|-----|--------|
-| 1 | Probe test sets have 1–4 positives; feature position may leak the label | Decoupled feature anchor from label (always anchors on target-phrase end token, not the citation marker); added leave-one-condition-out transfer eval | Code done, re-extraction running |
-| 2 | ConflictBank ~97% "ambiguous" no-context, doesn't measure citation | Added content-token matcher (recovers verbose parametric answers), conditional override rate (restricted to demonstrated parametric knowledge), and context→citation linkage rate | **Done**, numbers final |
-| 3 | Mechanistic patching found no mechanism yet paper implies one | Added bootstrapped effect-size CIs per component type; found the effect **is** present in the residual stream (best recovery 0.163, CI [0.067, 0.253], 4 components ≥ threshold) but not localizable to individual heads/MLPs (head CI [0.004, 0.049]) — reframes as "distributed, not sparse-localizable" instead of "nothing found" | **Done**, numbers final |
-| 4 | Weak novelty; 3 experiments loosely connected | Added a unifying "conditioning/robustness before reporting" paragraph in Implications; added 10 new peer-reviewed citations (attribution frameworks, knowledge-conflict literature, faithfulness-in-NLG parallels, circuit-level mechanistic work) that place the paper in a broader evidence base | **Done** |
+| 1 | Probe test sets have 1–4 positives; feature position may leak the label | Decoupled feature anchor from label; re-extracted all three models and ran leave-one-condition-out transfer. Corrected probes scored below the strongest baseline in every model; paper now reports this negative result. | Leakage concern addressed; robust screening claim unsupported |
+| 2 | ConflictBank ~97% "ambiguous" no-context, doesn't measure citation | Added content-token matcher, conditional override rate, and context→citation linkage rate. No-context ambiguity remains 1,994/2,000 Llama, 1,942/2,000 Qwen, and 1,916/2,000 Gemma; demonstrated-knowledge subsets are 5, 56, and 71. | Partial; causal citation reliance unproven |
+| 3 | Mechanistic patching found no mechanism yet paper implies one | Added bootstrapped effect-size CIs. The best residual recovery is 0.163 (CI [0.067, 0.253]); four residual positions have mean recovery ≥ 0.10, while no individual head or MLP write does. Scaling still corrected 0/7 missed and 0/58 spurious citations. | Overclaim reduced; mechanism unvalidated |
+| 4 | Weak novelty; 3 experiments loosely connected | Added a shared conditioning/robustness argument and peer-reviewed context, but no new decisive comparison against Wallat et al. or independent causal result. | Open for another selective journal |
 
 ## What's done
 
@@ -65,46 +65,55 @@ response before resubmission to another IS-tier journal.
   were rebuilt with exactly 45 references.
 - Session/repo memory notes recorded in `/memories/session/citation-faithfulness-revision.md`.
 
-## What's currently running (detached screen session)
+## Current run status: complete (September 29, 19:39 CEST)
 
 The previous run stopped without an error message at 498/604 displayed Qwen rows; its last saved
-checkpoint was 493/604. On September 29 at 15:30 CEST, the pipeline was resumed in a detached
-`screen` session named `citation_probe_revision`. Qwen passed the old checkpoint; the latest
-confirmed saved checkpoint was 503/604. The pipeline then continues with Llama and a fresh Gemma
-extraction, followed by forced retraining, evaluation, leave-one-condition-out transfer, and
-baselines for each model.
+checkpoint was 493/604. A detached session resumed the Qwen extraction and completed all 604 rows,
+then refreshed its training, evaluation, leave-one-condition-out transfer, and baselines. Its
+all-model launcher was then intentionally stopped before Gemma. Llama continued in a separate
+Llama-only session, completed all 479 extraction rows, and refreshed the same four downstream steps.
+That session exited successfully with `LLAMA_DONE_PIPELINE_PAUSED` at 16:07 CEST. On the user's
+subsequent request, Gemma was started in a detached `screen` session named `citation_probe_gemma`.
+Its old features were backed up, and the new extraction completed all 1,464 rows using the
+corrected feature anchor. Training, evaluation, transfer testing, and baselines finished with the
+`GEMMA_PIPELINE_DONE` marker at 19:39 CEST. No probe run is active.
 
-Live log: `artifacts/run_logs/resume_probe_revision_20260929T133000Z.log`.
-Check `screen -ls`, the latest log progress, and `features_progress.json`; the script writes
-`PIPELINE_DONE` on success or `PIPELINE_FAILED` on error. The manuscript still contains the old
-probe numbers until the new results are reviewed and inserted.
+Logs: `artifacts/run_logs/resume_probe_revision_20260929T133000Z.log` (intentionally interrupted
+all-model launcher), `artifacts/run_logs/finish_llama_then_pause_20260929T140400Z.log` (Llama
+completion), and `artifacts/run_logs/finish_gemma_revision_20260929T150253Z.log` (completed Gemma
+run). The probe results were reviewed and inserted in both article versions;
+the abstract, tables, discussion, conclusion, highlights, cover letter, and editor response now
+state that the corrected probes did not exceed the strongest baseline by AUROC.
 
-If the terminal is lost/killed, resume per model with:
-```
-source .venv/bin/activate
-python -m citation_faithfulness.cli probe extract --model <model>   # no --force = resumes
-python -m citation_faithfulness.cli probe train --model <model> --force
-python -m citation_faithfulness.cli probe evaluate --model <model> --force
-python -m citation_faithfulness.cli probe transfer --model <model> --force
-python -m citation_faithfulness.cli probe baselines --model <model> --force
-```
-(Do **not** set `HF_HUB_OFFLINE`/`TRANSFORMERS_OFFLINE` — revision lookup needs network even
-though weights load from the local cache at `/Volumes/AI/LLMs`, which must be mounted.)
+Corrected test AUROC: Llama 0.243, Qwen 0.531, Gemma 0.328. Each test set has only 1, 2, and 4
+positive examples, respectively. Several leave-one-condition-out held-out sets have no positives.
+`artifacts/report.md` has been regenerated from the completed metrics.
 
 ## What's left
 
-1. Wait for re-extraction pipeline to finish; verify `PIPELINE_DONE` in the log.
-2. Read new `metrics.json`, `transfer_metrics.json`, `baseline_metrics.json` per model.
-3. Update paper Table `tab:probes` with the new (de-confounded) AUROC/AUPRC/balanced-accuracy
-   numbers, plus a new table/paragraph for leave-one-condition-out transfer results (not yet added
-   to the paper — needs the real numbers first).
-4. Update the abstract's probe AUROC numbers (currently 0.943 / 0.969 / 0.831 — will change).
-5. Revisit the Discussion/Conclusion/Implications sections to tighten the novelty narrative
-   (concern 4) now that all three experiments (behavioral, ConflictBank, mechanistic, probe)
-   share the conditional/robustness reframing.
-6. Re-run `scripts/plot_paper_figures.py` if any figure needs updating (ConflictBank figure
-   itself doesn't change, only the new table is additive).
-7. Regenerate `artifacts/report.md` via `citation-faithfulness report` once probes are done.
-8. Final proofread pass on both `citation_faithfulness_blind.tex` and the non-blind
-   `citation_faithfulness.tex` (mirror all edits into the non-blind copy — not yet done).
-9. Update `README.md` / PRD if any documented CLI surface changed (new commands added).
+1. Manually audit a sample of behavioral labels and repeat the probe evaluation with more positive
+   cases if a reliable hidden-state monitor remains a research goal.
+2. Update `README.md` / PRD if the new CLI commands should be documented for external users.
+
+## Repurposed manuscript positioning (29 September 2026)
+
+The article is now framed as **“Stress-Testing Citation Faithfulness in Open-Weight
+Retrieval-Augmented Generation.”** Its primary result is an operational, cross-model
+comparison of citation assignment after answer-bearing document insertions. The main
+table now reports event, available-intervention, and recovered-statement counts separately;
+the percentages use recovered statements as their denominator. ConflictBank, PopQA patching,
+and hidden-state probes are explicitly auxiliary diagnostics with limited or negative
+findings. The abstract, introduction, objectives, methods, results, discussion, conclusion,
+highlights, and generic cover letter were updated in both identified and blind versions.
+
+This reframing improves the match between claims and evidence, but it does **not** resolve
+the novelty concern for a selective journal through a new experiment. Before claiming a
+causal document-relevance effect or true citation provenance, the study still needs matched
+document positions and source retention, placebo/no-insertion and source-ablation controls,
+manual label auditing, and independent validation. The prior `Response_to_the_Editor` is
+specific to the rejected submission and should not accompany a new journal submission.
+
+Both article PDFs and the one-page highlights and cover-letter PDFs compiled successfully
+with TeX Live. The two article PDFs are 16 pages each, cite all 45 bibliography entries,
+and have no unresolved citation or reference warnings. The identified first page and the
+behavioral methods page were visually checked after compilation.
