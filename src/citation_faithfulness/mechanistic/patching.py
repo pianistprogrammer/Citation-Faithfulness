@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Literal, cast
 
+import numpy as np
 import pandas as pd
 import torch
 from tqdm import tqdm
@@ -324,3 +325,44 @@ def select_components() -> Path:
             if row["mean_denoising_recovery"] >= 0.10: result[f"positive_{kind}"] .append(item)
             if row["mean_noising_degradation"] >= 0.20: result[f"necessary_{kind}"].append(item)
     output = ARTIFACTS / "mechanistic" / "selected_components.json"; write_json(output, result); return output
+
+
+POSITIVE_THRESHOLD = 0.10
+NECESSARY_THRESHOLD = 0.20
+
+
+def _bootstrap_mean_ci(values: np.ndarray, resamples: int = 2000) -> tuple[float, float, float]:
+    rng = np.random.default_rng(42)
+    means = [float(rng.choice(values, size=len(values), replace=True).mean()) for _ in range(resamples)]
+    low, high = np.quantile(means, [0.025, 0.975])
+    return float(values.mean()), float(low), float(high)
+
+
+def null_analysis(force: bool = False) -> Path:
+    """Quantify the mechanistic null: even the best-scoring component's mean
+    denoising recovery, with a per-example bootstrap CI, stays below the
+    pre-registered selection threshold. This grounds the negative result as a
+    powered null rather than an unreported absence of an effect.
+    """
+    output = ARTIFACTS / "mechanistic" / "null_analysis.json"
+    if output.exists() and not force: return output
+    result: dict[str, Any] = {"positive_threshold": POSITIVE_THRESHOLD, "necessary_threshold": NECESSARY_THRESHOLD, "components": {}}
+    for kind, component in (("head", "head"), ("mlp", "token_position"), ("residual", "token_position")):
+        raw = pd.read_parquet(ARTIFACTS / "mechanistic" / f"{kind}_patching_raw.parquet")
+        agg = raw.groupby(["layer", component]).denoising_recovery.mean().reset_index()
+        best = agg.loc[agg.denoising_recovery.idxmax()]
+        values = raw[(raw.layer == best.layer) & (raw[component] == best[component])].denoising_recovery.to_numpy()
+        mean, low, high = _bootstrap_mean_ci(values)
+        result["components"][kind] = {
+            "n_components": int(len(agg)),
+            "n_examples": int(raw.example_index.nunique()),
+            "max_mean_denoising_recovery": float(best.denoising_recovery),
+            "best_layer": int(best.layer),
+            "best_component": int(best[component]),
+            "best_component_recovery_mean": mean,
+            "best_component_recovery_ci95": [low, high],
+            "best_component_ci_upper_below_threshold": bool(high < POSITIVE_THRESHOLD),
+            "n_components_mean_recovery_above_threshold": int((agg.denoising_recovery >= POSITIVE_THRESHOLD).sum()),
+            "fraction_examples_positive_recovery": float((values > 0).mean()),
+        }
+    write_json(output, result); return output

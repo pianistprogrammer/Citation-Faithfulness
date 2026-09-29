@@ -13,16 +13,19 @@ from rich.console import Console
 from citation_faithfulness.behavioral.experiment import build_interventions, compute_metrics, generate_originals, run_interventions
 from citation_faithfulness.data.conflictbank import metrics as conflict_metrics_fn
 from citation_faithfulness.data.conflictbank import prepare as prepare_conflictbank_fn
+from citation_faithfulness.data.conflictbank import reclassify as reclassify_conflictbank_fn
 from citation_faithfulness.data.conflictbank import run as run_conflictbank
 from citation_faithfulness.data.kilt import prepare as prepare_kilt_fn
 from citation_faithfulness.data.natural_questions import prepare as prepare_nq_fn
 from citation_faithfulness.data.popqa import prepare as prepare_popqa_fn
 from citation_faithfulness.generation.models import preferred_device
 from citation_faithfulness.mechanistic.interventions import validate as validate_mechanistic
+from citation_faithfulness.mechanistic.patching import null_analysis as mechanistic_null_analysis
 from citation_faithfulness.mechanistic.patching import patch, select_components, select_examples
 from citation_faithfulness.mechanistic.popqa_pairs import build_pairs
 from citation_faithfulness.probes.evaluate import baselines as evaluate_baselines
 from citation_faithfulness.probes.evaluate import evaluate as evaluate_probe
+from citation_faithfulness.probes.evaluate import transfer as transfer_probe
 from citation_faithfulness.probes.features import extract as extract_features
 from citation_faithfulness.probes.features import write_splits
 from citation_faithfulness.probes.train import train_layers
@@ -98,6 +101,9 @@ def conflict_run(
 ):
     emit(run_conflictbank(model, force, max_rows=max_rows, max_new_tokens=max_new_tokens))
 
+@conflict_app.command("reclassify")
+def conflict_reclassify(): emit(reclassify_conflictbank_fn())
+
 @conflict_app.command("metrics")
 def conflict_metrics(): emit(conflict_metrics_fn())
 
@@ -139,6 +145,9 @@ def patch_heads(
     emit(result)
     if result.name == "head_patching.parquet": emit(select_components())
 
+@mechanistic_app.command("null-analysis")
+def mechanistic_null(force: bool = False): emit(mechanistic_null_analysis(force))
+
 @mechanistic_app.command("validate-interventions")
 def validate_interventions(
     force: bool = False,
@@ -165,6 +174,9 @@ def probe_train(model: str = typer.Option(..., "--model"), force: bool = False):
 
 @probe_app.command("evaluate")
 def probe_evaluate(model: str = typer.Option(..., "--model"), force: bool = False): emit(evaluate_probe(model, force))
+
+@probe_app.command("transfer")
+def probe_transfer(model: str = typer.Option(..., "--model"), force: bool = False): emit(transfer_probe(model, force))
 
 @probe_app.command("baselines")
 def probe_baselines(model: str = typer.Option(..., "--model"), force: bool = False): emit(evaluate_baselines(model, force))

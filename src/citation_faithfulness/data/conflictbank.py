@@ -8,10 +8,11 @@ import pandas as pd
 from datasets import load_dataset
 from tqdm import tqdm
 
-from citation_faithfulness.behavioral.statements import normalize
+from citation_faithfulness.behavioral.statements import CITATION_RE, STOPWORDS, normalize
 from citation_faithfulness.generation.generate import generate
 from citation_faithfulness.generation.models import LoadedModel, load_model
 from citation_faithfulness.generation.prompts import SYSTEM_PROMPT
+from citation_faithfulness.metrics.behavioral import wilson
 from citation_faithfulness.utils import ARTIFACTS, write_json, write_manifest
 
 DATASET_ID = "Warrieryes/CB_qa"
@@ -55,15 +56,47 @@ def prepare(force: bool = False, rows: Iterable[dict[str, Any]] | None = None) -
     return output
 
 
+def _content_tokens(text: str) -> list[str]:
+    return [token for token in normalize(text).split() if token not in STOPWORDS]
+
+
+def answer_contains(answer: str, candidate: str) -> bool:
+    """Robust containment: normalized substring, or a contiguous run of the
+    candidate's content tokens inside the answer's content-token stream.
+
+    The plain substring rule used previously marked most no-context answers as
+    ambiguous because models restate short answers verbosely. Matching on content
+    tokens (stopwords removed) recovers those parametric answers deterministically
+    without an LLM judge.
+    """
+    answer_norm = normalize(answer)
+    candidate_norm = normalize(candidate)
+    if not candidate_norm:
+        return False
+    if candidate_norm in answer_norm:
+        return True
+    wanted = _content_tokens(candidate)
+    if not wanted:
+        return False
+    stream = _content_tokens(answer)
+    for index in range(len(stream) - len(wanted) + 1):
+        if stream[index:index + len(wanted)] == wanted:
+            return True
+    return False
+
+
 def classify(answer: str, original: str, conflict: str) -> str:
-    normalized = normalize(answer)
-    has_original = normalize(original) in normalized
-    has_conflict = normalize(conflict) in normalized
+    has_original = answer_contains(answer, original)
+    has_conflict = answer_contains(answer, conflict)
     if has_original and not has_conflict:
         return "PARAMETRIC_MATCH"
     if has_conflict and not has_original:
         return "CONTEXT_MATCH"
     return "AMBIGUOUS"
+
+
+def _cites_doc1(answer: str) -> bool:
+    return "1" in set(CITATION_RE.findall(answer))
 
 
 def run(
@@ -94,7 +127,7 @@ def run(
         with_context = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": f"Document [1]:\n{row['conflicting_evidence']}\n\nQuestion: {row['question']}"}]
         no_answer, _, _ = generate(loaded, no_context, max_new_tokens=max_new_tokens)
         conflict_answer, _, _ = generate(loaded, with_context, max_new_tokens=max_new_tokens)
-        records.append({**row, "model_id": model_id, "model_revision": loaded.revision, "no_context_answer": no_answer, "conflict_context_answer": conflict_answer, "no_context_class": classify(no_answer, row["original_answer"], row["conflicting_answer"]), "conflict_context_class": classify(conflict_answer, row["original_answer"], row["conflicting_answer"])})
+        records.append({**row, "model_id": model_id, "model_revision": loaded.revision, "no_context_answer": no_answer, "conflict_context_answer": conflict_answer, "no_context_class": classify(no_answer, row["original_answer"], row["conflicting_answer"]), "conflict_context_class": classify(conflict_answer, row["original_answer"], row["conflicting_answer"]), "conflict_cites_doc1": _cites_doc1(conflict_answer)})
         output.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(records).to_parquet(output, index=False)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -103,15 +136,61 @@ def run(
     return output
 
 
+def reclassify() -> Path:
+    """Recompute answer classes and citation flags from saved raw answers.
+
+    Applies the current matcher to the stored ``no_context_answer`` and
+    ``conflict_context_answer`` columns so the reframed metrics can be produced
+    without re-running generation.
+    """
+    changed = []
+    for path in sorted((ARTIFACTS / "conflictbank").glob("*.parquet")):
+        frame = pd.read_parquet(path)
+        if frame.empty or "no_context_answer" not in frame.columns:
+            continue
+        frame["no_context_class"] = [classify(a, o, c) for a, o, c in zip(frame.no_context_answer, frame.original_answer, frame.conflicting_answer)]
+        frame["conflict_context_class"] = [classify(a, o, c) for a, o, c in zip(frame.conflict_context_answer, frame.original_answer, frame.conflicting_answer)]
+        frame["conflict_cites_doc1"] = [_cites_doc1(a) for a in frame.conflict_context_answer]
+        frame.to_parquet(path, index=False)
+        changed.append(path.name)
+    if not changed:
+        raise FileNotFoundError("No ConflictBank model results to reclassify")
+    output = ARTIFACTS / "conflictbank" / "reclassify.json"
+    write_json(output, {"reclassified_files": changed})
+    return output
+
+
 def metrics() -> Path:
     result: dict[str, Any] = {}
     for path in sorted((ARTIFACTS / "conflictbank").glob("*.parquet")):
         frame = pd.read_parquet(path)
-        if frame.empty:
+        if frame.empty or "model_id" not in frame.columns:
             continue
         model_id = str(frame.model_id.iloc[0])
         matrix = pd.crosstab(frame.no_context_class, frame.conflict_context_class)
-        result[model_id] = {str(row): {str(column): int(matrix.loc[row, column]) for column in matrix.columns} for row in matrix.index}
+        crosstab = {str(row): {str(column): int(matrix.loc[row, column]) for column in matrix.columns} for row in matrix.index}
+
+        known = frame[frame.no_context_class == "PARAMETRIC_MATCH"]
+        override = int((known.conflict_context_class == "CONTEXT_MATCH").sum())
+        conditional_rate = override / len(known) if len(known) else None
+        conditional_ci = list(wilson(override, len(known))) if len(known) else None
+
+        context = frame[frame.conflict_context_class == "CONTEXT_MATCH"]
+        cited = int(context.conflict_cites_doc1.sum()) if "conflict_cites_doc1" in frame.columns else 0
+        citation_rate = cited / len(context) if len(context) else None
+
+        result[model_id] = {
+            "crosstab": crosstab,
+            "n": int(len(frame)),
+            "no_context_class_counts": {str(k): int(v) for k, v in frame.no_context_class.value_counts().items()},
+            "conflict_context_class_counts": {str(k): int(v) for k, v in frame.conflict_context_class.value_counts().items()},
+            "parametric_known_count": int(len(known)),
+            "conditional_context_match_rate": conditional_rate,
+            "conditional_context_match_wilson_95": conditional_ci,
+            "context_match_count": int(len(context)),
+            "context_match_cites_doc1_count": cited,
+            "context_match_citation_rate": citation_rate,
+        }
     if not result:
         raise FileNotFoundError("No ConflictBank model results found")
     output = ARTIFACTS / "conflictbank" / "metrics.json"

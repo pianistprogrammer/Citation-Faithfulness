@@ -42,6 +42,43 @@ def _jaccard(left: str, right: str) -> float:
     return len(a & b) / len(a | b) if a | b else 0.0
 
 
+def _fit_score(train: pd.DataFrame, test: pd.DataFrame) -> np.ndarray:
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler().fit(np.stack(train.feature))
+    classifier = LogisticRegression(penalty="l2", C=1.0, solver="liblinear", class_weight="balanced", max_iter=5000, random_state=42)
+    classifier.fit(scaler.transform(np.stack(train.feature)), train.label.to_numpy())
+    return classifier.predict_proba(scaler.transform(np.stack(test.feature)))[:, 1]
+
+
+def transfer(model_id: str, force: bool = False) -> Path:
+    """Leave-one-condition-out probe transfer at the selected layer.
+
+    For each intervention condition, train on the remaining conditions and test on
+    the held-out one. This checks that the probe captures a condition-general
+    faithfulness signal rather than cues specific to one intervention type.
+    """
+    directory = ARTIFACTS / "probes" / model_slug(model_id); output = directory / "transfer_metrics.json"
+    if output.exists() and not force: return output
+    layer = json.loads((directory / "selection.json").read_text())["selected_layer"]
+    frame = pd.read_parquet(directory / "features.parquet").merge(pd.read_parquet(ARTIFACTS / "probes" / "splits.parquet"), on="question_id")
+    frame = frame[frame.layer == layer].copy()
+    conditions = sorted(frame.condition.unique())
+    result: dict[str, object] = {"selected_layer": int(layer), "leave_one_condition_out": {}}
+    for held in conditions:
+        train = frame[(frame.condition != held) & (frame.split.isin(["train", "validation"]))]
+        test = frame[(frame.condition == held) & (frame.split == "test")]
+        entry: dict[str, object] = {"test_rows": int(len(test)), "test_positives": int(test.label.sum()), "train_positives": int(train.label.sum())}
+        if train.label.nunique() == 2 and test.label.nunique() == 2:
+            scores = _fit_score(train, test)
+            entry["auroc"] = float(roc_auc_score(test.label, scores))
+            entry["auprc"] = float(average_precision_score(test.label, scores))
+        else:
+            entry["auroc"] = None; entry["auprc"] = None
+        result["leave_one_condition_out"][held] = entry
+    write_json(output, result); return output
+
+
 def baselines(model_id: str, force: bool = False) -> Path:
     from sentence_transformers import SentenceTransformer
     directory = ARTIFACTS / "probes" / model_slug(model_id); output = directory / "baseline_predictions.parquet"

@@ -44,6 +44,22 @@ def _subsequence(sequence: list[int], wanted: list[int]) -> int | None:
     return None
 
 
+def _locate_end(answer_ids: list[int], tokenizer, text: str) -> int | None:
+    """Return the index of the last token of ``text`` inside ``answer_ids``.
+
+    Encodes the span with and without a leading space so that the anchor is found
+    regardless of the tokenizer's whitespace handling. Returns ``None`` when absent.
+    """
+    for candidate in (text, " " + text):
+        wanted = tokenizer.encode(candidate, add_special_tokens=False)
+        if not wanted:
+            continue
+        start = _subsequence(answer_ids, wanted)
+        if start is not None:
+            return start + len(wanted) - 1
+    return None
+
+
 def _clear_accelerator_cache() -> None:
     gc.collect()
     if torch.cuda.is_available():
@@ -116,12 +132,16 @@ def extract(
             prompt_ids = tokenizer.encode(prompt, add_special_tokens=False); answer_ids = tokenizer.encode(answer, add_special_tokens=False)
             full_ids = torch.tensor([prompt_ids + answer_ids], device=loaded.device)
             marker = f"[{int(row['adversarial_doc_index'])}]"; marker_ids = tokenizer.encode(marker, add_special_tokens=False)
-            marker_at = _subsequence(answer_ids, marker_ids) if row["adversarial_doc_cited"] else None
-            if marker_at is not None: decision = marker_at
-            else:
+            # Label-independent anchor: the last token of the target phrase, i.e. the
+            # pre-citation position where the model decides whether to cite. Chosen
+            # identically for both classes so the probe cannot exploit position or
+            # output cues tied to the citation outcome (removes the label leak).
+            decision = _locate_end(answer_ids, tokenizer, row["target_phrase"])
+            if decision is None:
                 sentence = sentence_with_phrase(answer, row["target_phrase"]) or answer
-                sentence_ids = tokenizer.encode(sentence, add_special_tokens=False)
-                at = _subsequence(answer_ids, sentence_ids); decision = (at + len(sentence_ids) - 1) if at is not None else len(answer_ids) - 1
+                decision = _locate_end(answer_ids, tokenizer, sentence)
+            if decision is None:
+                decision = len(answer_ids) - 1
             decision = max(0, decision); positions = [max(0, decision - 2), max(0, decision - 1), decision]
             with torch.inference_mode(): result = loaded.model(input_ids=full_ids, output_hidden_states=True, use_cache=False)
             period_ids = tokenizer.encode(".", add_special_tokens=False)
